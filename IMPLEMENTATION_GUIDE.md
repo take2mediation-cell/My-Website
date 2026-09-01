@@ -1,5 +1,33 @@
 # Ubuntu Legacy Community Care Website - Implementation Guide
 
+## Financial Advisor Assistant (Canadian Tax)
+
+A new page at `/financial-advisor` offers a free chat assistant ("Maple") that
+answers plain-language questions about Canadian personal income tax, RRSPs,
+TFSAs, FHSAs, CPP/OAS, and credits relevant to seniors (age amount, pension
+splitting, GIS, CVITP free tax clinics, etc.).
+
+- **Client:** `client/src/pages/TaxAdvisor.tsx` — streams the assistant's
+  reply token-by-token and renders it as Markdown via `streamdown`.
+- **Server:** `server/routes/taxAdvisor.ts` — validates the request
+  (`shared/chat.ts`) and streams a response from the Anthropic API over
+  Server-Sent Events.
+- **Knowledge:** `server/lib/canadianTaxKnowledge.ts` holds the system prompt
+  with reference figures (2025 tax year, approximate — CRA indexes many of
+  these annually, and the assistant is instructed to say so and point users to
+  canada.ca or a professional).
+
+**Setup:** copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. Without
+it, the page still loads but shows a friendly "not configured yet" message
+instead of erroring.
+
+> Note: this repository's `client/`, `server/`, and `shared/` source folders
+> were not present when this guide's other pages (Home, About, Programs,
+> Donate, etc. — described below) were originally built; only a minimal Home
+> page and this new Financial Advisor page currently exist. The rest of the
+> site described in this guide will need to be restored from its original
+> source or rebuilt separately.
+
 ## Overview
 
 This website has been built to incorporate the software recommendations from the nonprofit management analysis, creating a modern, functional platform that integrates with free and cost-effective tools.
