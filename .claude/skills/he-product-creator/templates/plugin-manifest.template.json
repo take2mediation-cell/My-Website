@@ -1,0 +1,9 @@
+{
+  "name": "{slug}",
+  "displayName": "{Display Name}",
+  "version": "1.0.0",
+  "description": "{One sentence positioning the plugin as a Specialist / done-for-you service that produces {the personalized output} for {the buyer}. Not 'a tool.'}",
+  "author": {
+    "name": "{Plugin Developer or brand name}"
+  }
+}
