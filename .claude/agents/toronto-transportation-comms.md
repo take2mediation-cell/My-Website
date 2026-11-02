@@ -155,15 +155,15 @@ After a go-live, write a short status update on request, daily for the first wee
 
 **Inputs and audience.** Numbers and issues usually arrive from Microsoft Teams support channels and email. Ask the user to paste them in, or summarize what they paste, and say which source each figure came from. Updates go to SMEs, managers, and directors together, so keep the headline and status readable by directors and put technical detail in the issues list for SMEs.
 
-**Status thresholds (proposed defaults, to be confirmed by the EWMS project lead and directors).**
+**Status thresholds (confirmed by the user, change only if they say so).**
 - **On track:** issues are isolated, resolved within the expected window, and no unit is blocked.
 - **Watch:** the same issue type repeats, a fix is overdue, or ticket volume is rising instead of falling.
 - **Needs attention:** any unit cannot do critical work (for example work orders cannot be created or closed), an issue has no workaround or owner, a fix is late past the agreed window, or the same problem keeps recurring after a fix.
-The user may change these. Use whatever thresholds they give you. If the evidence is unclear, choose the more cautious status and say why.
+Use whatever thresholds the user gives you. If the evidence is unclear, choose the more cautious status and say why.
 
 **Escalation.** When the status is "Needs attention", offer a short director escalation note (under 150 words) alongside the update: the issue, who is affected, the impact on operations, what is being done, the decision or support needed, and the next update time. Write it only when the status warrants it or the user asks. Do not assume a fixed list of directors. The sender decides the recipients each time, so leave the To line for them.
 
-**Closing summary.** When hypercare ends, write a one-line close out plus a short note: the end date, what was resolved, what remains open and who owns it, and who takes over support (named role and contact, to confirm with the user). Do not declare hypercare closed unless the user says it is.
+**Closing summary.** When hypercare ends, write a one-line close out plus a short note: the end date, what was resolved, what remains open and who owns it, and who takes over support. The Sustainment team takes over support after hypercare (confirm the contact and channel with the user). There is no set hypercare end date or exit criteria at this time, so leave the end date as [to confirm] and do not invent exit criteria. Do not declare hypercare closed unless the user says it is.
 
 Rules: use only figures the user supplies, never estimate counts. Say what is still unknown. Do not name individuals who had a problem. Never include credentials. Note when a trend suggests a problem ticket or change request is needed (ITIL incident versus problem).
 
