@@ -1,7 +1,7 @@
 <title>Chief of Staff Console</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: left rail with the brief and agent roster, main column with focus list, command bar, then live source panels. */
+/* Layout: main column with focus list, command bar, grant deadlines and live source panels; right rail with agent roster and source status. */
 :root {
   --bg: #f4f5f3;
   --surface: #ffffff;
@@ -41,6 +41,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body); f
   padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
 button { font: inherit; color: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; min-width: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .wrap { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
 header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
@@ -50,16 +51,16 @@ header.top p { margin: 2px 0 0; color: var(--muted); }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
-.btn.primary:disabled { opacity: .55; cursor: wait; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.btn.small { padding: 3px 9px; font-size: 12px; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
 @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 .col { display: grid; gap: 20px; min-width: 0; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
-.panel h2 { font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.panel h2 { font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .panel h2 small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); }
 .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
-/* focus list */
 .focus { display: grid; gap: 10px; }
 .item { display: grid; grid-template-columns: 6px minmax(0,1fr) auto; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .item .bar { border-radius: 3px; background: var(--low); }
@@ -67,23 +68,25 @@ header.top p { margin: 2px 0 0; color: var(--muted); }
 .item h3 { font-size: 14px; margin-bottom: 2px; overflow-wrap: anywhere; }
 .item p { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
 .chip.high { background: var(--high-soft); color: var(--high); } .chip.medium { background: var(--med-soft); color: var(--med); } .chip.low { background: var(--low-soft); color: var(--low); }
 .chip.agent { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.empty { color: var(--muted); padding: 8px 0; }
-.err { color: var(--high); background: var(--high-soft); border-radius: 6px; padding: 8px 10px; }
+.empty { color: var(--muted); padding: 8px 0; margin: 0; }
+.err { color: var(--high); background: var(--high-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
+.ok { color: var(--low); background: var(--low-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
 
-/* command bar */
 .cmd { display: grid; gap: 10px; }
-textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 10px; font: inherit; }
+textarea { width: 100%; min-height: 78px; resize: vertical; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .suggest button { font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); }
 .suggest button:hover { border-color: var(--accent); }
 .route { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; }
 .route b { font-family: var(--font-display); }
 .out { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px; max-height: 560px; overflow: auto; font-size: 13.5px; }
+.draft { display: grid; gap: 8px; border: 1px dashed var(--accent); border-radius: 8px; padding: 12px; }
+.draft .f { display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 8px; align-items: center; }
+.draft textarea { min-height: 140px; }
 
-/* lists */
 .list { display: grid; gap: 0; }
 .li { display: grid; grid-template-columns: 78px minmax(0,1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .li:first-child { border-top: 0; }
@@ -94,7 +97,16 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
 .two { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; }
 @media (max-width: 700px) { .two { grid-template-columns: minmax(0,1fr); } }
 
-/* roster */
+.dl-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; align-items: end; }
+.dl-form label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.dl { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
+.dl:first-child { border-top: 0; }
+.dl h3 { font-size: 14px; overflow-wrap: anywhere; }
+.dl .sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.dl.done h3 { text-decoration: line-through; color: var(--muted); }
+.dl a { color: var(--accent); }
+.cands { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; display: grid; gap: 8px; }
+
 .agents { display: grid; gap: 8px; }
 .agent { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface); text-align: left; width: 100%; }
 .agent:hover { border-color: var(--accent); }
@@ -124,8 +136,9 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
   <div class="grid">
     <div class="col">
       <section class="panel" aria-labelledby="focus-h">
-        <h2 id="focus-h">What to concentrate on <small id="focus-meta"></small></h2>
-        <div class="focus" id="focus"><p class="empty">Run the brief and the Chief of Staff will rank today's work from your calendar, inbox, Notion and Drive, and name the agent best placed to handle each item.</p></div>
+        <h2 id="focus-h"><span>What to concentrate on</span> <span class="row"><small id="focus-meta"></small><button class="btn small" id="save-notion" type="button" hidden>Save brief to Notion</button></span></h2>
+        <div class="focus" id="focus"><p class="empty">Run the brief and the Chief of Staff will rank today's work from Outlook, Gmail, calendars, Notion, Drive and your tracked grant deadlines, and name the agent best placed to handle each item.</p></div>
+        <div id="notion-status"></div>
       </section>
 
       <section class="panel cmd" aria-labelledby="cmd-h">
@@ -139,11 +152,33 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
         </div>
         <div class="route" id="route" hidden></div>
         <div class="out" id="out" hidden></div>
+        <div class="draft" id="draftbox" hidden>
+          <b>Save as a Gmail draft</b>
+          <div class="f"><label for="d-to">To</label><input id="d-to" type="text" placeholder="Optional. One or more addresses, separated by commas"></div>
+          <div class="f"><label for="d-sub">Subject</label><input id="d-sub" type="text"></div>
+          <textarea id="d-body" aria-label="Email body"></textarea>
+          <div class="row"><button class="btn primary" id="d-save" type="button">Save draft to Gmail</button><span class="note">This only creates a draft. Nothing is sent.</span></div>
+          <div id="d-status"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="dl-h">
+        <h2 id="dl-h"><span>Grant deadlines and funder portals</span> <small id="dl-meta"></small></h2>
+        <div class="dl-form" id="dl-form">
+          <label for="dl-title">Opportunity<input id="dl-title" type="text" placeholder="Program or grant name"></label>
+          <label for="dl-funder">Funder<input id="dl-funder" type="text" placeholder="Funder name"></label>
+          <label for="dl-due">Due date<input id="dl-due" type="date"></label>
+          <label for="dl-url">Portal link<input id="dl-url" type="url" placeholder="https://"></label>
+          <button class="btn primary" id="dl-add" type="button">Add deadline</button>
+        </div>
+        <div class="row" style="margin-bottom:8px"><button class="btn" id="dl-scan" type="button">Scan my tools for deadlines</button><span class="note" id="dl-scan-status">Searches Outlook, Gmail, both calendars and Notion for grant and funding dates. You approve every date before it is tracked.</span></div>
+        <div id="dl-list"></div>
+        <div class="cands" id="dl-cands" hidden></div>
       </section>
 
       <div class="two">
         <section class="panel" aria-labelledby="cal-h"><h2 id="cal-h">Next 7 days <small id="cal-meta"></small></h2><div class="list" id="cal"></div></section>
-        <section class="panel" aria-labelledby="mail-h"><h2 id="mail-h">Unread, last 7 days <small id="mail-meta"></small></h2><div class="list" id="mail"></div></section>
+        <section class="panel" aria-labelledby="mail-h"><h2 id="mail-h">Unread mail <small id="mail-meta"></small></h2><div class="list" id="mail"></div></section>
         <section class="panel" aria-labelledby="notion-h"><h2 id="notion-h">Recently edited in Notion <small id="notion-meta"></small></h2><div class="list" id="notion"></div></section>
         <section class="panel" aria-labelledby="drive-h"><h2 id="drive-h">Recent in Drive <small id="drive-meta"></small></h2><div class="list" id="drive"></div></section>
       </div>
@@ -158,11 +193,11 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
       <section class="panel" aria-labelledby="src-h">
         <h2 id="src-h">Connected sources</h2>
         <div id="sources"></div>
-        <p class="note" style="margin:10px 0 0">Read only. The console never sends, deletes or edits anything in these tools. Drafts it writes stay on this page until you copy them.</p>
+        <p class="note" style="margin:10px 0 0">Reads are automatic. The console writes in only two places, and only when you press the button: a Gmail draft (never sent) and a page in your Notion Morning briefs hub.</p>
       </section>
       <section class="panel" aria-labelledby="gov-h">
         <h2 id="gov-h">Handling rules</h2>
-        <p class="note" style="margin:0">Email subjects, senders and event titles are sent to Claude to rank and draft. Do not use this console for content that Privacy or Legal has marked restricted until you confirm it is approved for this use.</p>
+        <p class="note" style="margin:0">Email subjects, senders, snippets and event titles are sent to Claude to rank and draft. Agents do not invent figures, dates or funder rules. Anything unverified is marked to verify.</p>
       </section>
     </aside>
   </div>
@@ -171,17 +206,20 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
 <script>
 (function () {
   "use strict";
-  var NO_DASH = "Style rules: plain language, no em dashes, no filler phrases, write like an experienced human advisor. Use Canadian spelling. Do not invent laws, policies, statistics or funder rules; mark anything unverified as 'to verify' and say where to confirm it.";
+  var NO_DASH = "Style rules: plain language, no em dashes, no filler phrases, write like an experienced human advisor. Use Canadian spelling. Do not invent laws, policies, statistics, dates, dollar figures or funder rules; mark anything unverified as 'to verify' and say where to confirm it.";
+  var NOTION_BRIEFS_DS = "5b0b1442-0689-8346-b67f-076244f71009";
 
   var AGENTS = [
     { id: "grants", name: "Grants Agent", scope: "Ontario nonprofit proposals, logic models, budgets, Low/Medium/High funding options",
       brief: "You are an expert Ontario nonprofit grant writer. Build funder-ready proposals using a logic model (Inputs, Activities, Outputs, Outcomes short/medium/long, Impact), SMART outcomes, KPIs with data sources, assumptions and risks, and a business justification for every dollar requested with Low, Medium and High funding options. Start with an executive summary. Keep outcomes separate from outputs." },
+    { id: "finance", name: "Finance Agent", scope: "Nonprofit budgets, variance, cash flow, grant financial reports, month-end, HST and CRA flags",
+      brief: "You are a nonprofit finance lead for a small Ontario charity-style organization. The user keeps a Google Sheets finance workbook on a Canadian nonprofit (ASNPO) chart of accounts with grant and fund tracking, and a separate annual operating budget workbook. You cover budget builds, variance analysis, cash flow, grant financial reporting and fund accounting, month-end close and reconciliation steps, and audit or review readiness. Always start with an executive summary. Never invent figures: ask for the current numbers or say which sheet and tab to pull them from. Flag HST, payroll, contractor classification and CRA questions as 'to verify with a CPA'. Show Low, Medium and High options when money is requested or allocated." },
     { id: "gov", name: "Government Advisor", scope: "Briefing notes, options analysis, roadmaps, RACI, RAID, governance, privacy and risk",
       brief: "You are a partner-level public sector advisor. Produce briefing notes or executive briefs. Always include an executive summary, three options (Conservative, Balanced, Bold) with a recommendation, risks and mitigations, and the next 10 actions with owners and timing. Cover privacy (PIA thinking, classification, residency, retention, access, logging, breach response, third party risk), accessibility and records. If jurisdiction is unknown, use a generic Canadian baseline and flag what needs tailoring." },
     { id: "itsm", name: "Delivery and ITIL Agent", scope: "Change plans, adoption, transition to operations, ITIL practices, SLAs, hypercare",
       brief: "You are an ITIL 4 aligned delivery lead. Cover change impact assessment, sponsor alignment, stakeholder map, resistance plan, comms narrative, training, readiness checkpoints, hypercare, adoption metrics, and a 30/60/90 day plan. For operations, cover incident, problem and change enablement, SLAs and XLAs, service catalog, support model and continual improvement. Include an executive summary." },
     { id: "comms", name: "Inbox and Comms Agent", scope: "Reply drafts, follow-ups, stakeholder messages, triage of what needs an answer",
-      brief: "You draft clear, warm, direct emails and messages. Give a short subject, the message, and a one line note on tone choice. Offer a shorter variant. Never claim anything was sent." },
+      brief: "You draft clear, warm, direct emails and messages. Never claim anything was sent. Format your answer exactly like this: first line 'Subject: <short subject>', then a blank line, then the plain text email body with no Markdown, then a line containing only three hyphens, then a one line note on tone and a shorter variant of the email." },
     { id: "cal", name: "Calendar and Time Agent", scope: "Scheduling, prep for meetings, protecting focus time, agenda drafts",
       brief: "You plan the user's time. Produce meeting prep notes, agendas with timeboxes, and a realistic schedule that protects focus blocks. Flag conflicts and back-to-back risks." },
     { id: "research", name: "Research and Evidence Agent", scope: "Fact checks, policy and funder landscape, what to verify and where",
@@ -189,7 +227,11 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
   ];
   var byId = {}; AGENTS.forEach(function (a) { byId[a.id] = a; });
 
-  var state = { cal: null, mail: null, notion: null, drive: null, selectedAgent: null, busy: false };
+  var SRC = { omail: "Outlook mail", ocal: "Outlook calendar", gmail: "Gmail", gcal: "Google Calendar", notion: "Notion", drive: "Google Drive" };
+  var KEYS = Object.keys(SRC);
+  var state = { rows: {}, selectedAgent: null, busy: false, lastBrief: null, lastDraftFor: null };
+  var srcStatus = {}, srcErr = {};
+  var deadlines = [], dlLoaded = false, db = null;
   var $ = function (id) { return document.getElementById(id); };
   var mcp = null, sample = null, unsubs = [];
 
@@ -201,13 +243,13 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
   }
   function safeUrl(u) { return typeof u === "string" && u.indexOf("https://") === 0 ? u : null; }
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
-  function fmtTime(iso) {
-    try { var d = new Date(iso); return d.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; }
-  }
-  function fmtDay(iso) { try { return new Date(iso).toLocaleDateString("en-CA", { month: "short", day: "numeric" }); } catch (e) { return ""; }
-  }
+  function fmtTime(iso) { try { var d = new Date(iso); return d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } }
+  function fmtDay(iso) { try { return new Date(iso).toLocaleDateString("en-CA", { month: "short", day: "numeric" }); } catch (e) { return ""; } }
+  function ts(iso) { var t = Date.parse(iso || ""); return isNaN(t) ? 0 : t; }
+  function localISO(d) { var p = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+  function today() { return localISO(new Date()); }
+  function errCode(e) { return e && e.code; }
 
-  /* header */
   (function head() {
     var h = new Date().getHours();
     $("greeting").textContent = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
@@ -228,6 +270,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
 
   var SUGGESTIONS = [
     "Draft a logic model and Low/Medium/High budget justification for a youth employment grant",
+    "Build a Low/Medium/High budget and variance summary for the board",
     "Write a briefing note with three options on adopting a new service desk tool",
     "Build a 30/60/90 day change plan and hypercare approach for a system rollout",
     "Draft a reply asking a funder for a short extension",
@@ -239,14 +282,12 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
     $("suggest").appendChild(b);
   });
 
-  /* sources */
-  var SRC = { cal: "Google Calendar", mail: "Gmail", notion: "Notion", drive: "Google Drive" };
-  var srcStatus = {};
+  /* source status */
   function renderSources() {
     var box = $("sources"); clear(box);
-    Object.keys(SRC).forEach(function (k) {
+    KEYS.forEach(function (k) {
       var r = el("div", { class: "src" });
-      var l = el("span"); var d = el("i", { class: "dot " + (srcStatus[k] === "ok" ? "ok" : srcStatus[k] ? "bad" : "") }); l.appendChild(d); l.appendChild(document.createTextNode(SRC[k]));
+      var l = el("span"); l.appendChild(el("i", { class: "dot " + (srcStatus[k] === "ok" ? "ok" : srcStatus[k] ? "bad" : "") })); l.appendChild(document.createTextNode(SRC[k]));
       r.appendChild(l); r.appendChild(el("span", { class: "note" }, srcStatus[k] === "ok" ? "live" : srcStatus[k] || "waiting"));
       box.appendChild(r);
     });
@@ -254,7 +295,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
   renderSources();
 
   function errText(e) {
-    var c = e && e.code;
+    var c = errCode(e);
     if (c === "needs_reauth") return "reconnect in Settings > Connectors";
     if (c === "server_not_connected") return "not connected";
     if (c === "not_in_manifest" || c === "approval_required" || c === "consent_required") return "not allowed for this page";
@@ -264,165 +305,291 @@ textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid va
   }
   function stampNow() { $("stamp").textContent = "Updated " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); }
 
-  function renderList(id, metaId, rows, emptyText) {
-    var box = $(id); clear(box);
-    if (!rows.length) { box.appendChild(el("p", { class: "empty" }, emptyText)); }
-    rows.forEach(function (r) {
-      var li = el("div", { class: "li" });
-      li.appendChild(el("div", { class: "t" }, r.when || ""));
-      var c = el("div");
-      var u = safeUrl(r.url);
-      if (u) { var a = el("a", { href: u, target: "_blank", rel: "noopener" }, r.title || "(untitled)"); c.appendChild(a); } else c.appendChild(el("span", null, r.title || "(untitled)"));
-      if (r.sub) c.appendChild(el("div", { class: "sub" }, r.sub));
-      li.appendChild(c); box.appendChild(li);
+  /* parsing: some connectors return one JSON object per content block */
+  function blocksOf(res) {
+    var out = [];
+    if (res && res.content) res.content.forEach(function (b) {
+      if (b && b.type === "text" && typeof b.text === "string") { try { var v = JSON.parse(b.text); if (Array.isArray(v)) out = out.concat(v); else out.push(v); } catch (e) {} }
     });
-    $(metaId).textContent = rows.length + " items";
+    if (!out.length && res && res.payload) { var p = res.payload; if (Array.isArray(p)) out = p; else if (typeof p === "object") out = [p]; }
+    return out;
   }
-  function renderErr(id, key, e) {
-    srcStatus[key] = errText(e); renderSources();
-    var box = $(id); clear(box); box.appendChild(el("div", { class: "err" }, SRC[key] + ": " + errText(e) + "."));
-  }
-
+  function pay(res) { return (res && res.payload) || {}; }
+  function startOf(x) { var s = x.start; if (s && typeof s === "object") return s.dateTime || s.date || ""; return (typeof s === "string" ? s : "") || x.startDateTime || x.startTime || ""; }
   function senderName(s) { return (s || "").replace(/<.*>/, "").replace(/"/g, "").trim() || s || ""; }
 
   var parsers = {
-    cal: function (p) {
-      var ev = (p && p.events) || [];
-      return ev.map(function (e) { var st = (e.start && (e.start.dateTime || e.start.date)) || ""; return { title: e.summary, when: st ? fmtDay(st) : "", sub: st && e.start.dateTime ? fmtTime(st) : "All day", url: e.htmlLink, raw: (e.summary || "") + " | " + st }; });
-    },
-    mail: function (p) {
-      var th = (p && p.threads) || [];
-      return th.map(function (t) { var m = (t.messages && t.messages[0]) || {}; return { title: m.subject, when: m.date ? fmtDay(m.date) : "", sub: senderName(m.sender), url: t.viewUrl || m.viewUrl, raw: (m.subject || "") + " | from " + senderName(m.sender) }; });
-    },
-    notion: function (p) {
-      var r = (p && p.results) || [];
-      return r.map(function (x) { return { title: x.title, when: x.timestamp ? fmtDay(x.timestamp) : "", sub: x.type, url: x.url, raw: (x.title || "") + " | Notion " + x.type + " edited " + (x.timestamp || "") }; });
-    },
-    drive: function (p) {
-      var f = (p && p.files) || [];
-      return f.map(function (x) { return { title: x.title, when: x.modifiedTime ? fmtDay(x.modifiedTime) : "", sub: (x.mimeType || "").split("/").pop().replace("vnd.google-apps.", "Google "), url: x.viewUrl, raw: (x.title || "") + " | Drive file modified " + (x.modifiedTime || "") }; });
-    }
+    gcal: function (res) { return (pay(res).events || []).map(function (e) { var st = (e.start && (e.start.dateTime || e.start.date)) || ""; return { title: e.summary, ts: ts(st), when: st ? fmtDay(st) : "", sub: "Google Calendar" + (e.start && e.start.dateTime ? ", " + fmtTime(st) : ", all day"), url: e.htmlLink, raw: "Google Calendar event: " + (e.summary || "") + " | " + st }; }); },
+    ocal: function (res) { return blocksOf(res).filter(function (x) { return x && x.subject; }).map(function (x) { var st = startOf(x); return { title: x.subject, ts: ts(st), when: st ? fmtDay(st) : "", sub: "Outlook calendar" + (st ? ", " + fmtTime(st) : ""), url: x.webLink, raw: "Outlook calendar event: " + x.subject + " | " + st }; }); },
+    gmail: function (res) { return (pay(res).threads || []).map(function (t) { var m = (t.messages && t.messages[0]) || {}; return { title: m.subject, ts: ts(m.date), when: m.date ? fmtDay(m.date) : "", sub: "Gmail, " + senderName(m.sender), url: t.viewUrl || m.viewUrl, raw: "Gmail unread: " + (m.subject || "") + " | from " + senderName(m.sender) }; }); },
+    omail: function (res) { return blocksOf(res).filter(function (x) { return x && x.subject && x.isRead === false; }).slice(0, 12).map(function (x) { return { title: x.subject, ts: ts(x.receivedDateTime), when: x.receivedDateTime ? fmtDay(x.receivedDateTime) : "", sub: "Outlook, " + (x.senderName || senderName(x.sender)), url: x.webLink, raw: "Outlook unread: " + x.subject + " | from " + (x.senderName || x.sender) + " | " + String(x.summary || "").replace(/[\u200b-\u200f\u034f\ufeff\s]+/g, " ").slice(0, 120) }; }); },
+    notion: function (res) { return (pay(res).results || []).map(function (x) { return { title: x.title, ts: ts(x.timestamp), when: x.timestamp ? fmtDay(x.timestamp) : "", sub: "Notion " + x.type, url: x.url, raw: "Notion " + x.type + ": " + (x.title || "") + " | edited " + (x.timestamp || "") }; }); },
+    drive: function (res) { return (pay(res).files || []).map(function (x) { return { title: x.title, ts: ts(x.modifiedTime), when: x.modifiedTime ? fmtDay(x.modifiedTime) : "", sub: (x.mimeType || "").split("/").pop().replace("vnd.google-apps.", "Google "), url: x.viewUrl, raw: "Drive file: " + (x.title || "") + " | modified " + (x.modifiedTime || "") }; }); }
   };
-  var domMap = { cal: ["cal", "cal-meta", "Nothing on the calendar in the next 7 days."], mail: ["mail", "mail-meta", "No unread mail from the last 7 days."], notion: ["notion", "notion-meta", "No recent Notion pages found."], drive: ["drive", "drive-meta", "No recent Drive files found."] };
+
+  var PANELS = {
+    cal: { keys: ["ocal", "gcal"], meta: "cal-meta", empty: "Nothing on either calendar in the next 7 days.", sort: 1 },
+    mail: { keys: ["omail", "gmail"], meta: "mail-meta", empty: "No unread mail found.", sort: -1 },
+    notion: { keys: ["notion"], meta: "notion-meta", empty: "No recent Notion pages found.", sort: 0 },
+    drive: { keys: ["drive"], meta: "drive-meta", empty: "No recent Drive files found.", sort: 0 }
+  };
+
+  function renderPanel(id) {
+    var P = PANELS[id], box = $(id); clear(box);
+    var rows = [];
+    P.keys.forEach(function (k) { rows = rows.concat(state.rows[k] || []); });
+    if (P.sort) rows.sort(function (a, b) { return P.sort * (a.ts - b.ts); });
+    if (!rows.length) box.appendChild(el("p", { class: "empty" }, P.empty));
+    rows.slice(0, 14).forEach(function (r) {
+      var li = el("div", { class: "li" });
+      li.appendChild(el("div", { class: "t" }, r.when || ""));
+      var c = el("div"); var u = safeUrl(r.url);
+      if (u) c.appendChild(el("a", { href: u, target: "_blank", rel: "noopener" }, r.title || "(untitled)")); else c.appendChild(el("span", null, r.title || "(untitled)"));
+      if (r.sub) c.appendChild(el("div", { class: "sub" }, r.sub));
+      li.appendChild(c); box.appendChild(li);
+    });
+    P.keys.forEach(function (k) { if (srcErr[k] && !state.rows[k]) box.appendChild(el("div", { class: "err" }, SRC[k] + ": " + srcErr[k] + ".")); });
+    $(P.meta).textContent = rows.length + " items";
+  }
+  function panelOf(k) { return k === "omail" || k === "gmail" ? "mail" : k === "ocal" || k === "gcal" ? "cal" : k; }
 
   function handle(key) {
     return function (ev) {
       if (ev.type === "error") {
-        if (state[key]) { srcStatus[key] = "stale"; renderSources(); } else renderErr(domMap[key][0], key, ev.error);
-        return;
+        srcErr[key] = errText(ev.error);
+        srcStatus[key] = state.rows[key] ? "stale" : srcErr[key]; renderSources(); renderPanel(panelOf(key)); return;
       }
-      var rows = parsers[key](ev.result && ev.result.payload);
-      state[key] = rows; srcStatus[key] = "ok"; renderSources();
-      renderList(domMap[key][0], domMap[key][1], rows, domMap[key][2]); stampNow();
+      try { state.rows[key] = parsers[key](ev.result); } catch (e) { state.rows[key] = []; }
+      delete srcErr[key]; srcStatus[key] = "ok"; renderSources(); renderPanel(panelOf(key)); stampNow();
     };
   }
 
   function startWatches() {
     unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = [];
     var opt = { refetchInterval: 300000 };
-    unsubs.push(mcp.watchTool("Google Calendar", "list_events", { pageSize: 25, orderBy: "startTime" }, handle("cal"), opt));
-    unsubs.push(mcp.watchTool("Gmail", "search_threads", { query: "is:unread in:inbox newer_than:7d", pageSize: 15, view: "THREAD_VIEW_SUMMARY" }, handle("mail"), opt));
+    unsubs.push(mcp.watchTool("Microsoft 365", "outlook_email_search", { order: "newest", limit: 25 }, handle("omail"), opt));
+    unsubs.push(mcp.watchTool("Microsoft 365", "outlook_calendar_search", { query: "*", afterDateTime: "today", beforeDateTime: "in 7 days", limit: 25 }, handle("ocal"), opt));
+    unsubs.push(mcp.watchTool("Gmail", "search_threads", { query: "is:unread in:inbox newer_than:7d", pageSize: 15, view: "THREAD_VIEW_SUMMARY" }, handle("gmail"), opt));
+    unsubs.push(mcp.watchTool("Google Calendar", "list_events", { pageSize: 25, orderBy: "startTime" }, handle("gcal"), opt));
     unsubs.push(mcp.watchTool("Notion", "notion-search", { query: "", sort: "last_edited", page_size: 10, max_highlight_length: 0 }, handle("notion"), opt));
     unsubs.push(mcp.watchTool("Google Drive", "list_recent_files", { pageSize: 10, excludeContentSnippets: true }, handle("drive"), opt));
   }
 
-  /* Chief of Staff: routing */
-  function catalog() { return AGENTS.map(function (a) { return a.id + ": " + a.name + " (" + a.scope + ")"; }).join("\n"); }
+  /* grant deadlines */
+  function daysLeft(due) { if (!due) return null; var d = new Date(due + "T00:00:00"); var n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((d - n) / 86400000); }
+  function dlChip(d) {
+    if (d.status === "submitted") return ["submitted", ""];
+    var n = daysLeft(d.due);
+    if (n === null) return ["no date", ""];
+    if (n < 0) return [Math.abs(n) + " days overdue", "high"];
+    if (n === 0) return ["due today", "high"];
+    return [n + (n === 1 ? " day left" : " days left"), n <= 7 ? "high" : n <= 21 ? "medium" : "low"];
+  }
+  function renderDeadlines() {
+    var box = $("dl-list"); clear(box);
+    if (!db) { box.appendChild(el("p", { class: "empty" }, "Saving deadlines is not available in this view. Open the page inside Claude to track them.")); $("dl-form").hidden = true; $("dl-meta").textContent = ""; return; }
+    if (!dlLoaded) { box.appendChild(el("p", { class: "empty" }, "Loading tracked deadlines...")); return; }
+    var rows = deadlines.slice().sort(function (a, b) {
+      var as = a.status === "submitted" ? 1 : 0, bs = b.status === "submitted" ? 1 : 0; if (as !== bs) return as - bs;
+      return (a.due || "9999").localeCompare(b.due || "9999");
+    });
+    if (!rows.length) box.appendChild(el("p", { class: "empty" }, "Nothing tracked yet. Add a deadline above, or scan your tools and approve the dates it finds."));
+    rows.forEach(function (d) {
+      var r = el("div", { class: "dl" + (d.status === "submitted" ? " done" : "") });
+      var c = el("div"); c.appendChild(el("h3", null, d.title || "(untitled)"));
+      var sub = [d.funder, d.due ? "Due " + d.due : "", d.note].filter(Boolean).join(" | "); if (sub) c.appendChild(el("div", { class: "sub" }, sub));
+      var ch = el("div", { class: "chips" }); var cp = dlChip(d); ch.appendChild(el("span", { class: "chip " + cp[1] }, cp[0]));
+      var u = safeUrl(d.url); if (u) { var a = el("a", { href: u, target: "_blank", rel: "noopener" }, "Open funder portal"); a.style.fontSize = "12px"; ch.appendChild(a); }
+      c.appendChild(ch); r.appendChild(c);
+      var act = el("div", { class: "row" });
+      var done = el("button", { class: "btn small", type: "button" }, d.status === "submitted" ? "Reopen" : "Mark submitted");
+      done.addEventListener("click", function () { db.doc("deadlines/" + d.id).update({ status: d.status === "submitted" ? "open" : "submitted" }).catch(function () {}); });
+      var del = el("button", { class: "btn small", type: "button", "aria-label": "Remove " + (d.title || "deadline") }, "Remove");
+      del.addEventListener("click", function () { db.doc("deadlines/" + d.id).delete().catch(function () {}); });
+      act.appendChild(done); act.appendChild(del); r.appendChild(act); box.appendChild(r);
+    });
+    var open = deadlines.filter(function (d) { return d.status !== "submitted"; }).length;
+    $("dl-meta").textContent = open + " open";
+  }
+  function addDeadline(d) {
+    if (!db) return Promise.reject(new Error("no db"));
+    var rec = { title: String(d.title || "").slice(0, 200), funder: String(d.funder || "").slice(0, 120), due: /^\d{4}-\d{2}-\d{2}$/.test(d.due || "") ? d.due : "", url: safeUrl(d.url) || "", note: String(d.note || "").slice(0, 200), status: "open", createdAt: Date.now() };
+    return db.collection("deadlines").add(rec);
+  }
+  $("dl-add").addEventListener("click", function () {
+    var t = $("dl-title").value.trim(); if (!t) { $("dl-title").focus(); return; }
+    var url = $("dl-url").value.trim();
+    addDeadline({ title: t, funder: $("dl-funder").value.trim(), due: $("dl-due").value, url: url }).then(function () {
+      ["dl-title", "dl-funder", "dl-due", "dl-url"].forEach(function (i) { $(i).value = ""; });
+    }).catch(function () { $("dl-scan-status").textContent = "Could not save the deadline. Check that you have edit access to this page."; });
+  });
 
+  async function scanDeadlines() {
+    if (!mcp || !sample) return;
+    var btn = $("dl-scan"); btn.disabled = true; $("dl-scan-status").textContent = "Searching Outlook, Gmail, calendars and Notion...";
+    var end = new Date(); end.setDate(end.getDate() + 180);
+    var calls = [
+      ["Gmail", "search_threads", { query: '(grant OR funding OR "letter of intent" OR "application deadline" OR "final report") newer_than:120d', pageSize: 15, view: "THREAD_VIEW_MINIMAL" }, function (r) { return (pay(r).threads || []).map(function (t) { var m = (t.messages && t.messages[0]) || {}; return "[Gmail] " + (m.subject || "") + " | " + String(m.snippet || "").slice(0, 200); }); }],
+      ["Microsoft 365", "outlook_email_search", { query: "grant deadline", limit: 15 }, function (r) { return blocksOf(r).filter(function (x) { return x && x.subject; }).map(function (x) { return "[Outlook mail] " + x.subject + " | " + String(x.summary || "").replace(/[\u200b-\u200f\u034f\ufeff\s]+/g, " ").slice(0, 200); }); }],
+      ["Microsoft 365", "outlook_calendar_search", { query: "deadline", afterDateTime: "today", beforeDateTime: "in 180 days", limit: 15 }, function (r) { return blocksOf(r).filter(function (x) { return x && x.subject; }).map(function (x) { return "[Outlook calendar] " + x.subject + " | " + startOf(x); }); }],
+      ["Google Calendar", "list_events", { fullText: "deadline", endTime: localISO(end) + "T00:00:00", pageSize: 15, orderBy: "startTime" }, function (r) { return (pay(r).events || []).map(function (e) { return "[Google Calendar] " + (e.summary || "") + " | " + ((e.start && (e.start.dateTime || e.start.date)) || ""); }); }],
+      ["Notion", "notion-search", { query: "grant deadline", page_size: 10, max_highlight_length: 300 }, function (r) { return (pay(r).results || []).map(function (x) { return "[Notion] " + (x.title || "") + " | " + String(x.highlight || "").slice(0, 300); }); }]
+    ];
+    try {
+      var results = await Promise.allSettled(calls.map(function (c) { return mcp.callTool(c[0], c[1], c[2], { cache: false }); }));
+      var lines = [], failed = 0;
+      results.forEach(function (r, i) { if (r.status === "fulfilled") { try { lines = lines.concat(calls[i][3](r.value)); } catch (e) {} } else failed++; });
+      if (!lines.length) { $("dl-scan-status").textContent = failed ? "None of the searches could run. Check the Connected sources panel." : "No grant or funding items found in the last 120 days."; return; }
+      $("dl-scan-status").textContent = "Reading " + lines.length + " items...";
+      var res = await sample.json("Today is " + today() + ". Below are search hits (subject plus a short snippet) from the user's email, calendars and Notion. Extract grant, funding or funder-reporting deadlines ONLY where an item states a date or clearly implies one. Never invent a date; leave due empty when none is stated. Ignore marketing and newsletters.\n\nItems:\n" + lines.slice(0, 70).join("\n") + "\n\nReturn JSON only: {\"candidates\": [{\"title\": \"...\", \"funder\": \"...\", \"due\": \"YYYY-MM-DD or empty string\", \"evidence\": \"<source tag and the words that support it>\", \"confidence\": \"stated|implied|unknown\"}]}. " + NO_DASH, { modelTier: "default", cache: false });
+      renderCandidates((res && res.candidates) || []);
+      $("dl-scan-status").textContent = (res && res.candidates && res.candidates.length ? res.candidates.length + " possible deadlines found. Check each before adding." : "Nothing in those items looked like a grant deadline.") + (failed ? " " + failed + " source(s) could not be searched." : "");
+    } catch (e) { $("dl-scan-status").textContent = errCode(e) === "not_granted" ? "Claude access was not allowed for this page." : "The scan could not finish. Try again."; }
+    finally { btn.disabled = false; }
+  }
+  function renderCandidates(list) {
+    var box = $("dl-cands"); clear(box); box.hidden = !list.length;
+    list.forEach(function (c) {
+      var r = el("div", { class: "dl" }); var m = el("div");
+      m.appendChild(el("h3", null, c.title || "(untitled)"));
+      m.appendChild(el("div", { class: "sub" }, [c.funder, c.due ? "Due " + c.due : "No date found", c.confidence].filter(Boolean).join(" | ")));
+      m.appendChild(el("div", { class: "sub" }, "Evidence: " + (c.evidence || "")));
+      r.appendChild(m);
+      var add = el("button", { class: "btn small", type: "button" }, "Add to tracker");
+      add.addEventListener("click", function () { add.disabled = true; addDeadline({ title: c.title, funder: c.funder, due: c.due, note: c.confidence === "stated" ? "" : "To verify" }).then(function () { add.textContent = "Added"; }).catch(function () { add.disabled = false; add.textContent = "Could not save"; }); });
+      r.appendChild(add); box.appendChild(r);
+    });
+  }
+  $("dl-scan").addEventListener("click", scanDeadlines);
+
+  /* Chief of Staff */
+  function catalog() { return AGENTS.map(function (a) { return a.id + ": " + a.name + " (" + a.scope + ")"; }).join("\n"); }
+  function contextBlock() {
+    var parts = [];
+    ["omail", "ocal", "gmail", "gcal", "notion", "drive"].forEach(function (k) { var r = state.rows[k]; if (r && r.length) parts.push(SRC[k] + ":\n" + r.slice(0, 12).map(function (x) { return "- " + x.raw; }).join("\n")); });
+    var open = deadlines.filter(function (d) { return d.status !== "submitted"; });
+    if (open.length) parts.push("Tracked grant deadlines (user entered, today is " + today() + "):\n" + open.map(function (d) { var n = daysLeft(d.due); return "- " + d.title + (d.funder ? " | " + d.funder : "") + " | due " + (d.due || "no date") + (n !== null ? " (" + n + " days)" : "") + (d.note ? " | " + d.note : ""); }).join("\n"));
+    return parts.join("\n\n");
+  }
   async function route(task) {
-    var r = await sample.json(
-      "You are the Chief of Staff agent. Pick the single best specialist agent for this task.\nAgents:\n" + catalog() +
-      "\n\nTask: " + task + "\n\nReturn JSON only: {\"agent\": \"<id>\", \"reason\": \"<one plain sentence>\", \"needs\": \"<one short question if critical info is missing, else empty string>\"}. " + NO_DASH,
-      { modelTier: "quick", cache: false });
+    var r = await sample.json("You are the Chief of Staff agent. Pick the single best specialist agent for this task.\nAgents:\n" + catalog() + "\n\nTask: " + task + "\n\nReturn JSON only: {\"agent\": \"<id>\", \"reason\": \"<one plain sentence>\", \"needs\": \"<one short question if critical info is missing, else empty string>\"}. " + NO_DASH, { modelTier: "quick", cache: false });
     if (!r || !byId[r.agent]) r = { agent: "gov", reason: "Defaulted to the Government Advisor because the task did not clearly match a specialist.", needs: "" };
     return r;
   }
 
-  function contextBlock() {
-    var parts = [];
-    ["cal", "mail", "notion", "drive"].forEach(function (k) { if (state[k] && state[k].length) parts.push(SRC[k] + ":\n" + state[k].slice(0, 10).map(function (x) { return "- " + x.raw; }).join("\n")); });
-    return parts.join("\n\n");
+  function parseDraft(text) {
+    var t = String(text || "").trim(), subject = "", body = t;
+    var m = t.match(/^\s*Subject:\s*(.+)\n+/i);
+    if (m) { subject = m[1].trim(); body = t.slice(m[0].length); }
+    var cut = body.search(/\n-{3,}\s*(\n|$)/); if (cut >= 0) body = body.slice(0, cut);
+    return { subject: subject, body: body.trim() };
   }
 
   async function runTask() {
     var task = $("task").value.trim();
     if (!task || state.busy) return;
-    state.busy = true; $("go").disabled = true; $("copy").hidden = true;
-    var routeBox = $("route"), out = $("out");
-    out.hidden = true; clear(out);
+    state.busy = true; $("go").disabled = true; $("copy").hidden = true; $("draftbox").hidden = true; clear($("d-status"));
+    var routeBox = $("route"), out = $("out"); out.hidden = true; clear(out);
     try {
       var chosen;
       if (state.selectedAgent) chosen = { agent: state.selectedAgent, reason: "You sent this directly to " + byId[state.selectedAgent].name + ".", needs: "" };
       else { $("cmd-status").textContent = "Chief of Staff is choosing an agent..."; chosen = await route(task); }
       var ag = byId[chosen.agent];
       clear(routeBox); routeBox.hidden = false;
-      var b = el("b", null, "Routed to " + ag.name); routeBox.appendChild(b); routeBox.appendChild(el("div", null, chosen.reason));
+      routeBox.appendChild(el("b", null, "Routed to " + ag.name)); routeBox.appendChild(el("div", null, chosen.reason));
       if (chosen.needs) routeBox.appendChild(el("div", { class: "note" }, "Open question: " + chosen.needs));
-      $("cmd-status").textContent = ag.name + " is working...";
-      out.hidden = false; out.textContent = "Working...";
-      var prompt = ag.brief + "\n\n" + NO_DASH +
-        "\n\nContext from the user's connected tools (titles only, may be incomplete):\n" + (contextBlock() || "none loaded") +
-        "\n\nState your assumptions at the top if details are missing, then deliver. End with 3 to 7 targeted questions to improve version 2.\n\nTask: " + task;
-      await sample(prompt, { modelTier: "complex", cache: false, onText: function (u) { out.textContent = u.text; } });
+      $("cmd-status").textContent = ag.name + " is working..."; out.hidden = false; out.textContent = "Working...";
+      var prompt = ag.brief + "\n\n" + NO_DASH + "\n\nContext from the user's connected tools (titles only, may be incomplete):\n" + (contextBlock() || "none loaded") +
+        (ag.id === "comms" ? "\n\nTask: " + task : "\n\nState your assumptions at the top if details are missing, then deliver. End with 3 to 7 targeted questions to improve version 2.\n\nTask: " + task);
+      var res = await sample(prompt, { modelTier: "complex", cache: false, onText: function (u) { out.textContent = u.text; } });
+      var finalText = (res && res.text) || out.textContent;
+      out.textContent = finalText;
       $("copy").hidden = false; $("cmd-status").textContent = "Done. Review before using. Nothing was sent.";
+      if (ag.id === "comms" && mcp) { var d = parseDraft(finalText); $("d-sub").value = d.subject; $("d-body").value = d.body; $("d-to").value = ""; $("draftbox").hidden = false; }
     } catch (e) {
-      out.hidden = false; out.textContent = ""; var m = el("div", { class: "err" }, e && e.code === "not_granted" ? "Claude access was not allowed for this page, so the agents cannot run." : e && e.code === "rate_limited" ? "Too many requests. Wait a minute and try again." : "The agent could not finish. Try again.");
-      out.appendChild(m); $("cmd-status").textContent = "";
+      out.hidden = false; out.textContent = ""; out.appendChild(el("div", { class: "err" }, errCode(e) === "not_granted" ? "Claude access was not allowed for this page, so the agents cannot run." : errCode(e) === "rate_limited" ? "Too many requests. Wait a minute and try again." : "The agent could not finish. Try again.")); $("cmd-status").textContent = "";
     } finally { state.busy = false; $("go").disabled = false; }
   }
 
-  /* Chief of Staff: daily brief */
+  $("d-save").addEventListener("click", async function () {
+    var st = $("d-status"); clear(st);
+    var toRaw = $("d-to").value.trim(), to = toRaw ? toRaw.split(/[,;\s]+/).filter(Boolean) : [];
+    if (to.some(function (a) { return !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a); })) { st.appendChild(el("div", { class: "err" }, "One of the addresses does not look valid.")); return; }
+    var body = $("d-body").value.trim(); if (!body) { st.appendChild(el("div", { class: "err" }, "The draft body is empty.")); return; }
+    var btn = $("d-save"); btn.disabled = true;
+    try {
+      var input = { subject: $("d-sub").value.trim(), body: body }; if (to.length) input.to = to;
+      var res = await mcp.callTool("Gmail", "create_draft", input, { cache: false });
+      var p = pay(res), url = safeUrl(p.viewUrl);
+      var ok = el("div", { class: "ok" }, "Draft saved in Gmail. Nothing was sent. "); if (url) ok.appendChild(el("a", { href: url, target: "_blank", rel: "noopener" }, "Open the draft")); st.appendChild(ok);
+    } catch (e) {
+      var c = errCode(e); st.appendChild(el("div", { class: "err" }, c === "approval_required" || c === "not_in_manifest" || c === "consent_required" ? "Saving drafts needs your approval for Gmail on this page." : c === "needs_reauth" ? "Reconnect Gmail in Settings > Connectors, then try again." : "The draft could not be saved. Nothing was created that I can confirm, so check Gmail drafts before trying again."));
+    } finally { btn.disabled = false; }
+  });
+
   async function runBrief() {
     if (state.busy) return;
-    state.busy = true; $("brief").disabled = true; $("focus-meta").textContent = "ranking...";
+    state.busy = true; $("brief").disabled = true; $("focus-meta").textContent = "ranking..."; $("save-notion").hidden = true; clear($("notion-status"));
     try {
       var ctx = contextBlock();
       if (!ctx) { $("focus").replaceChildren(el("p", { class: "empty" }, "No source data has loaded yet. Check the Connected sources panel, refresh, and run the brief again.")); $("focus-meta").textContent = ""; return; }
-      var today = new Date().toISOString().slice(0, 10);
-      var res = await sample.json(
-        "You are the Chief of Staff for a busy leader who runs Ontario nonprofit grant work and government consulting. Today is " + today + ". From the items below, pick the 3 to 6 things that most deserve attention today. Ignore promotions, shipping notices and newsletters unless they carry a deadline. Rank by deadline, consequence of delay, and public or funder impact.\n\nItems:\n" + ctx +
+      var res = await sample.json("You are the Chief of Staff for a busy leader who runs Ontario nonprofit grant work and government consulting. Today is " + today() + ". From the items below, pick the 3 to 6 things that most deserve attention today. Ignore promotions, shipping notices and newsletters unless they carry a deadline. Any tracked grant deadline due within 14 days or overdue must appear and rank high. Rank by deadline, consequence of delay, and public or funder impact.\n\nItems:\n" + ctx +
         "\n\nAgents you can assign:\n" + catalog() +
-        "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings or emails. " + NO_DASH,
-        { modelTier: "default", cache: false });
+        "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings, emails or dates. " + NO_DASH, { modelTier: "default", cache: false });
       var box = $("focus"); clear(box);
       if (res.summary) box.appendChild(el("p", { class: "note", style: "margin:0 0 4px" }, res.summary));
       (res.focus || []).forEach(function (f) {
-        var pr = ["high", "medium", "low"].indexOf(f.priority) >= 0 ? f.priority : "medium";
-        var ag = byId[f.agent] || byId.gov;
+        var pr = ["high", "medium", "low"].indexOf(f.priority) >= 0 ? f.priority : "medium", ag = byId[f.agent] || byId.gov;
         var it = el("div", { class: "item " + pr }); it.appendChild(el("div", { class: "bar" }));
         var mid = el("div"); mid.appendChild(el("h3", null, f.title || "")); mid.appendChild(el("p", null, f.why || ""));
-        var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, pr + " priority")); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch);
-        it.appendChild(mid);
+        var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, pr + " priority")); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch); it.appendChild(mid);
         var go = el("button", { class: "btn", type: "button" }, "Hand off");
         go.addEventListener("click", function () { state.selectedAgent = ag.id; renderAgents(); $("task").value = f.suggested_task || f.title || ""; $("cmd-status").textContent = "Loaded for " + ag.name + ". Press Route and run."; $("task").scrollIntoView({ behavior: "smooth", block: "center" }); });
         it.appendChild(go); box.appendChild(it);
       });
-      $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+      state.lastBrief = res; $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+      $("save-notion").hidden = !mcp || !(res.focus && res.focus.length);
     } catch (e) {
-      $("focus").replaceChildren(el("div", { class: "err" }, e && e.code === "not_granted" ? "Claude access was not allowed for this page, so the brief cannot run." : "The brief could not finish. Try again."));
-      $("focus-meta").textContent = "";
+      $("focus").replaceChildren(el("div", { class: "err" }, errCode(e) === "not_granted" ? "Claude access was not allowed for this page, so the brief cannot run." : "The brief could not finish. Try again.")); $("focus-meta").textContent = "";
     } finally { state.busy = false; $("brief").disabled = false; }
   }
+
+  $("save-notion").addEventListener("click", async function () {
+    var b = state.lastBrief; if (!b || !mcp) return;
+    var st = $("notion-status"); clear(st); var btn = $("save-notion"); btn.disabled = true;
+    var md = (b.summary ? b.summary + "\n\n" : "") + "## Focus today\n" + (b.focus || []).map(function (f) { return "- **" + String(f.title || "").replace(/\*/g, "") + "** (" + (f.priority || "medium") + ", " + ((byId[f.agent] || {}).name || "Chief of Staff") + "): " + (f.why || ""); }).join("\n");
+    try {
+      var res = await mcp.callTool("Notion", "notion-create-pages", { parent: { type: "data_source_id", data_source_id: NOTION_BRIEFS_DS }, pages: [{ properties: { "Name": "Morning brief " + today(), "TL;DR": String(b.summary || "").slice(0, 1900) }, content: md }] }, { cache: false });
+      var m = JSON.stringify(res && (res.payload || res.content) || "").match(/https:\/\/[^\s"\\]+/);
+      var ok = el("div", { class: "ok" }, "Saved to your Morning briefs hub in Notion. "); if (m && safeUrl(m[0])) ok.appendChild(el("a", { href: m[0], target: "_blank", rel: "noopener" }, "Open the page")); st.appendChild(ok);
+    } catch (e) {
+      var c = errCode(e); st.appendChild(el("div", { class: "err" }, c === "approval_required" || c === "not_in_manifest" || c === "consent_required" ? "Saving to Notion needs your approval for Notion on this page." : "The page could not be saved. Check the Morning briefs hub before trying again."));
+    } finally { btn.disabled = false; }
+  });
 
   $("go").addEventListener("click", runTask);
   $("brief").addEventListener("click", runBrief);
   $("copy").addEventListener("click", function () {
-    var t = $("out").textContent;
-    var done = function (ok) { $("cmd-status").textContent = ok ? "Copied." : "Copy was blocked. Select the text and copy it by hand."; };
+    var t = $("out").textContent, done = function (ok) { $("cmd-status").textContent = ok ? "Copied." : "Copy was blocked. Select the text and copy it by hand."; };
     try { navigator.clipboard.writeText(t).then(function () { done(true); }, function () { done(false); }); } catch (e) { done(false); }
   });
-  $("refresh").addEventListener("click", function () {
-    if (!mcp) return;
-    $("refresh").disabled = true;
-    mcp.invalidate().catch(function () {}).then(function () { $("refresh").disabled = false; });
-  });
+  $("refresh").addEventListener("click", function () { if (!mcp) return; $("refresh").disabled = true; mcp.invalidate().catch(function () {}).then(function () { $("refresh").disabled = false; }); });
 
-  /* boot capabilities */
-  Promise.all([window.claude ? window.claude.use("mcp") : null, window.claude ? window.claude.use("sample") : null]).then(function (r) {
-    mcp = r[0]; sample = r[1];
-    if (!mcp) { ["cal", "mail", "notion", "drive"].forEach(function (k) { srcStatus[k] = "unavailable here"; var d = domMap[k]; $(d[0]).appendChild(el("p", { class: "empty" }, "Connectors are not available in this view. Open the page inside Claude to load live data.")); }); renderSources(); }
-    else startWatches();
-    if (!sample) { $("go").disabled = true; $("brief").disabled = true; $("cmd-status").textContent = "Agents need Claude access, which is not available in this view."; }
+  /* boot */
+  var C = window.claude;
+  Promise.all([C ? C.use("mcp") : null, C ? C.use("sample") : null, C ? C.use("db") : null]).then(function (r) {
+    mcp = r[0]; sample = r[1]; db = r[2];
+    if (!mcp) {
+      KEYS.forEach(function (k) { srcStatus[k] = "unavailable here"; }); renderSources();
+      ["cal", "mail", "notion", "drive"].forEach(function (id) { $(id).appendChild(el("p", { class: "empty" }, "Connectors are not available in this view. Open the page inside Claude to load live data.")); });
+      $("dl-scan").disabled = true;
+    } else startWatches();
+    if (!sample) { $("go").disabled = true; $("brief").disabled = true; $("dl-scan").disabled = true; $("cmd-status").textContent = "Agents need Claude access, which is not available in this view."; }
+    if (db) {
+      renderDeadlines();
+      var timer = setTimeout(function () { if (!dlLoaded) { clear($("dl-list")); $("dl-list").appendChild(el("div", { class: "err" }, "Could not load tracked deadlines. Reload the page to try again.")); } }, 10000);
+      db.collection("deadlines").onSnapshot(function (snap) { clearTimeout(timer); dlLoaded = true; deadlines = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); renderDeadlines(); }, function () { clearTimeout(timer); clear($("dl-list")); $("dl-list").appendChild(el("div", { class: "err" }, "Could not load tracked deadlines.")); });
+    } else renderDeadlines();
   });
 })();
 </script>
