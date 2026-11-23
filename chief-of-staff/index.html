@@ -1,0 +1,429 @@
+<title>Chief of Staff Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: left rail with the brief and agent roster, main column with focus list, command bar, then live source panels. */
+:root {
+  --bg: #f4f5f3;
+  --surface: #ffffff;
+  --surface-2: #eceeea;
+  --fg: #1b2420;
+  --muted: #5d6a63;
+  --line: #d9ddd7;
+  --accent: #1f5c4a;
+  --accent-fg: #ffffff;
+  --accent-soft: #dcebe4;
+  --high: #b3361f;
+  --high-soft: #f6dcd5;
+  --med: #8a5a00;
+  --med-soft: #f5e7c4;
+  --low: #3d6b52;
+  --low-soft: #dcebe2;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1512; --surface: #171f1b; --surface-2: #1f2924; --fg: #e6ece8; --muted: #94a39a; --line: #2b3830;
+    --accent: #6fcaa6; --accent-fg: #0b1a14; --accent-soft: #1d3329;
+    --high: #f08a72; --high-soft: #3a1f19; --med: #e3b552; --med-soft: #35290f; --low: #7fcf9f; --low-soft: #1b3426;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1512; --surface: #171f1b; --surface-2: #1f2924; --fg: #e6ece8; --muted: #94a39a; --line: #2b3830;
+  --accent: #6fcaa6; --accent-fg: #0b1a14; --accent-soft: #1d3329;
+  --high: #f08a72; --high-soft: #3a1f19; --med: #e3b552; --med-soft: #35290f; --low: #7fcf9f; --low-soft: #1b3426;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+header.top h1 { font-size: 26px; letter-spacing: -0.01em; }
+header.top p { margin: 2px 0 0; color: var(--muted); }
+.stamp { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.btn.primary:disabled { opacity: .55; cursor: wait; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; gap: 20px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.panel h2 { font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.panel h2 small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); }
+.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* focus list */
+.focus { display: grid; gap: 10px; }
+.item { display: grid; grid-template-columns: 6px minmax(0,1fr) auto; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.item .bar { border-radius: 3px; background: var(--low); }
+.item.high .bar { background: var(--high); } .item.medium .bar { background: var(--med); }
+.item h3 { font-size: 14px; margin-bottom: 2px; overflow-wrap: anywhere; }
+.item p { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.chip.high { background: var(--high-soft); color: var(--high); } .chip.medium { background: var(--med-soft); color: var(--med); } .chip.low { background: var(--low-soft); color: var(--low); }
+.chip.agent { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.empty { color: var(--muted); padding: 8px 0; }
+.err { color: var(--high); background: var(--high-soft); border-radius: 6px; padding: 8px 10px; }
+
+/* command bar */
+.cmd { display: grid; gap: 10px; }
+textarea { width: 100%; min-height: 78px; resize: vertical; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 10px; font: inherit; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.suggest button { font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); }
+.suggest button:hover { border-color: var(--accent); }
+.route { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; }
+.route b { font-family: var(--font-display); }
+.out { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px; max-height: 560px; overflow: auto; font-size: 13.5px; }
+
+/* lists */
+.list { display: grid; gap: 0; }
+.li { display: grid; grid-template-columns: 78px minmax(0,1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.li:first-child { border-top: 0; }
+.li .t { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.li a { color: var(--fg); text-decoration-color: var(--line); overflow-wrap: anywhere; }
+.li a:hover { color: var(--accent); }
+.li .sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; }
+@media (max-width: 700px) { .two { grid-template-columns: minmax(0,1fr); } }
+
+/* roster */
+.agents { display: grid; gap: 8px; }
+.agent { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface); text-align: left; width: 100%; }
+.agent:hover { border-color: var(--accent); }
+.agent.active { border-color: var(--accent); background: var(--accent-soft); }
+.agent b { font-family: var(--font-display); display: block; }
+.agent span { color: var(--muted); font-size: 12px; }
+.src { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: inline-block; margin-right: 6px; }
+.dot.ok { background: var(--low); } .dot.bad { background: var(--high); }
+.note { font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Chief of Staff Console</div>
+      <h1 id="greeting">Good day</h1>
+      <p id="dateline"></p>
+    </div>
+    <div class="row">
+      <span class="stamp" id="stamp">Not refreshed yet</span>
+      <button class="btn" id="refresh" type="button">Refresh sources</button>
+      <button class="btn primary" id="brief" type="button">Run the Chief of Staff brief</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="focus-h">
+        <h2 id="focus-h">What to concentrate on <small id="focus-meta"></small></h2>
+        <div class="focus" id="focus"><p class="empty">Run the brief and the Chief of Staff will rank today's work from your calendar, inbox, Notion and Drive, and name the agent best placed to handle each item.</p></div>
+      </section>
+
+      <section class="panel cmd" aria-labelledby="cmd-h">
+        <h2 id="cmd-h">Give the Chief of Staff a task</h2>
+        <textarea id="task" placeholder="Describe the work in plain words. Example: Draft the logic model for the youth employment grant, with low, medium and high funding options."></textarea>
+        <div class="row suggest" id="suggest"></div>
+        <div class="row">
+          <button class="btn primary" id="go" type="button">Route and run</button>
+          <button class="btn" id="copy" type="button" hidden>Copy output</button>
+          <span class="note" id="cmd-status"></span>
+        </div>
+        <div class="route" id="route" hidden></div>
+        <div class="out" id="out" hidden></div>
+      </section>
+
+      <div class="two">
+        <section class="panel" aria-labelledby="cal-h"><h2 id="cal-h">Next 7 days <small id="cal-meta"></small></h2><div class="list" id="cal"></div></section>
+        <section class="panel" aria-labelledby="mail-h"><h2 id="mail-h">Unread, last 7 days <small id="mail-meta"></small></h2><div class="list" id="mail"></div></section>
+        <section class="panel" aria-labelledby="notion-h"><h2 id="notion-h">Recently edited in Notion <small id="notion-meta"></small></h2><div class="list" id="notion"></div></section>
+        <section class="panel" aria-labelledby="drive-h"><h2 id="drive-h">Recent in Drive <small id="drive-meta"></small></h2><div class="list" id="drive"></div></section>
+      </div>
+    </div>
+
+    <aside class="col">
+      <section class="panel" aria-labelledby="roster-h">
+        <h2 id="roster-h">Agent roster</h2>
+        <p class="note" style="margin:0 0 10px">The Chief of Staff picks from these. Select one to send your task straight to it.</p>
+        <div class="agents" id="agents"></div>
+      </section>
+      <section class="panel" aria-labelledby="src-h">
+        <h2 id="src-h">Connected sources</h2>
+        <div id="sources"></div>
+        <p class="note" style="margin:10px 0 0">Read only. The console never sends, deletes or edits anything in these tools. Drafts it writes stay on this page until you copy them.</p>
+      </section>
+      <section class="panel" aria-labelledby="gov-h">
+        <h2 id="gov-h">Handling rules</h2>
+        <p class="note" style="margin:0">Email subjects, senders and event titles are sent to Claude to rank and draft. Do not use this console for content that Privacy or Legal has marked restricted until you confirm it is approved for this use.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var NO_DASH = "Style rules: plain language, no em dashes, no filler phrases, write like an experienced human advisor. Use Canadian spelling. Do not invent laws, policies, statistics or funder rules; mark anything unverified as 'to verify' and say where to confirm it.";
+
+  var AGENTS = [
+    { id: "grants", name: "Grants Agent", scope: "Ontario nonprofit proposals, logic models, budgets, Low/Medium/High funding options",
+      brief: "You are an expert Ontario nonprofit grant writer. Build funder-ready proposals using a logic model (Inputs, Activities, Outputs, Outcomes short/medium/long, Impact), SMART outcomes, KPIs with data sources, assumptions and risks, and a business justification for every dollar requested with Low, Medium and High funding options. Start with an executive summary. Keep outcomes separate from outputs." },
+    { id: "gov", name: "Government Advisor", scope: "Briefing notes, options analysis, roadmaps, RACI, RAID, governance, privacy and risk",
+      brief: "You are a partner-level public sector advisor. Produce briefing notes or executive briefs. Always include an executive summary, three options (Conservative, Balanced, Bold) with a recommendation, risks and mitigations, and the next 10 actions with owners and timing. Cover privacy (PIA thinking, classification, residency, retention, access, logging, breach response, third party risk), accessibility and records. If jurisdiction is unknown, use a generic Canadian baseline and flag what needs tailoring." },
+    { id: "itsm", name: "Delivery and ITIL Agent", scope: "Change plans, adoption, transition to operations, ITIL practices, SLAs, hypercare",
+      brief: "You are an ITIL 4 aligned delivery lead. Cover change impact assessment, sponsor alignment, stakeholder map, resistance plan, comms narrative, training, readiness checkpoints, hypercare, adoption metrics, and a 30/60/90 day plan. For operations, cover incident, problem and change enablement, SLAs and XLAs, service catalog, support model and continual improvement. Include an executive summary." },
+    { id: "comms", name: "Inbox and Comms Agent", scope: "Reply drafts, follow-ups, stakeholder messages, triage of what needs an answer",
+      brief: "You draft clear, warm, direct emails and messages. Give a short subject, the message, and a one line note on tone choice. Offer a shorter variant. Never claim anything was sent." },
+    { id: "cal", name: "Calendar and Time Agent", scope: "Scheduling, prep for meetings, protecting focus time, agenda drafts",
+      brief: "You plan the user's time. Produce meeting prep notes, agendas with timeboxes, and a realistic schedule that protects focus blocks. Flag conflicts and back-to-back risks." },
+    { id: "research", name: "Research and Evidence Agent", scope: "Fact checks, policy and funder landscape, what to verify and where",
+      brief: "You structure research. List what is known, what is unknown, what must be verified and the authoritative source to check (legislation, directive, funder guidelines, contract language). Treat claims as hypotheses until supported." }
+  ];
+  var byId = {}; AGENTS.forEach(function (a) { byId[a.id] = a; });
+
+  var state = { cal: null, mail: null, notion: null, drive: null, selectedAgent: null, busy: false };
+  var $ = function (id) { return document.getElementById(id); };
+  var mcp = null, sample = null, unsubs = [];
+
+  function el(tag, attrs, text) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { if (k === "class") n.className = attrs[k]; else n.setAttribute(k, attrs[k]); });
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function safeUrl(u) { return typeof u === "string" && u.indexOf("https://") === 0 ? u : null; }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  function fmtTime(iso) {
+    try { var d = new Date(iso); return d.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; }
+  }
+  function fmtDay(iso) { try { return new Date(iso).toLocaleDateString("en-CA", { month: "short", day: "numeric" }); } catch (e) { return ""; }
+  }
+
+  /* header */
+  (function head() {
+    var h = new Date().getHours();
+    $("greeting").textContent = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    $("dateline").textContent = new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  })();
+
+  /* roster */
+  function renderAgents() {
+    var box = $("agents"); clear(box);
+    AGENTS.forEach(function (a) {
+      var b = el("button", { class: "agent" + (state.selectedAgent === a.id ? " active" : ""), type: "button", "aria-pressed": state.selectedAgent === a.id ? "true" : "false" });
+      b.appendChild(el("b", null, a.name)); b.appendChild(el("span", null, a.scope));
+      b.addEventListener("click", function () { state.selectedAgent = state.selectedAgent === a.id ? null : a.id; renderAgents(); $("cmd-status").textContent = state.selectedAgent ? "Sending straight to " + a.name + "." : "The Chief of Staff will choose the agent."; });
+      box.appendChild(b);
+    });
+  }
+  renderAgents();
+
+  var SUGGESTIONS = [
+    "Draft a logic model and Low/Medium/High budget justification for a youth employment grant",
+    "Write a briefing note with three options on adopting a new service desk tool",
+    "Build a 30/60/90 day change plan and hypercare approach for a system rollout",
+    "Draft a reply asking a funder for a short extension",
+    "Prep me for my next meeting"
+  ];
+  SUGGESTIONS.forEach(function (s) {
+    var b = el("button", { type: "button" }, s.length > 48 ? s.slice(0, 46) + "..." : s);
+    b.title = s; b.addEventListener("click", function () { $("task").value = s; $("task").focus(); });
+    $("suggest").appendChild(b);
+  });
+
+  /* sources */
+  var SRC = { cal: "Google Calendar", mail: "Gmail", notion: "Notion", drive: "Google Drive" };
+  var srcStatus = {};
+  function renderSources() {
+    var box = $("sources"); clear(box);
+    Object.keys(SRC).forEach(function (k) {
+      var r = el("div", { class: "src" });
+      var l = el("span"); var d = el("i", { class: "dot " + (srcStatus[k] === "ok" ? "ok" : srcStatus[k] ? "bad" : "") }); l.appendChild(d); l.appendChild(document.createTextNode(SRC[k]));
+      r.appendChild(l); r.appendChild(el("span", { class: "note" }, srcStatus[k] === "ok" ? "live" : srcStatus[k] || "waiting"));
+      box.appendChild(r);
+    });
+  }
+  renderSources();
+
+  function errText(e) {
+    var c = e && e.code;
+    if (c === "needs_reauth") return "reconnect in Settings > Connectors";
+    if (c === "server_not_connected") return "not connected";
+    if (c === "not_in_manifest" || c === "approval_required" || c === "consent_required") return "not allowed for this page";
+    if (c === "blocked_by_policy") return "blocked by policy";
+    if (c === "server_unavailable") return "temporarily unavailable";
+    return "could not load";
+  }
+  function stampNow() { $("stamp").textContent = "Updated " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }); }
+
+  function renderList(id, metaId, rows, emptyText) {
+    var box = $(id); clear(box);
+    if (!rows.length) { box.appendChild(el("p", { class: "empty" }, emptyText)); }
+    rows.forEach(function (r) {
+      var li = el("div", { class: "li" });
+      li.appendChild(el("div", { class: "t" }, r.when || ""));
+      var c = el("div");
+      var u = safeUrl(r.url);
+      if (u) { var a = el("a", { href: u, target: "_blank", rel: "noopener" }, r.title || "(untitled)"); c.appendChild(a); } else c.appendChild(el("span", null, r.title || "(untitled)"));
+      if (r.sub) c.appendChild(el("div", { class: "sub" }, r.sub));
+      li.appendChild(c); box.appendChild(li);
+    });
+    $(metaId).textContent = rows.length + " items";
+  }
+  function renderErr(id, key, e) {
+    srcStatus[key] = errText(e); renderSources();
+    var box = $(id); clear(box); box.appendChild(el("div", { class: "err" }, SRC[key] + ": " + errText(e) + "."));
+  }
+
+  function senderName(s) { return (s || "").replace(/<.*>/, "").replace(/"/g, "").trim() || s || ""; }
+
+  var parsers = {
+    cal: function (p) {
+      var ev = (p && p.events) || [];
+      return ev.map(function (e) { var st = (e.start && (e.start.dateTime || e.start.date)) || ""; return { title: e.summary, when: st ? fmtDay(st) : "", sub: st && e.start.dateTime ? fmtTime(st) : "All day", url: e.htmlLink, raw: (e.summary || "") + " | " + st }; });
+    },
+    mail: function (p) {
+      var th = (p && p.threads) || [];
+      return th.map(function (t) { var m = (t.messages && t.messages[0]) || {}; return { title: m.subject, when: m.date ? fmtDay(m.date) : "", sub: senderName(m.sender), url: t.viewUrl || m.viewUrl, raw: (m.subject || "") + " | from " + senderName(m.sender) }; });
+    },
+    notion: function (p) {
+      var r = (p && p.results) || [];
+      return r.map(function (x) { return { title: x.title, when: x.timestamp ? fmtDay(x.timestamp) : "", sub: x.type, url: x.url, raw: (x.title || "") + " | Notion " + x.type + " edited " + (x.timestamp || "") }; });
+    },
+    drive: function (p) {
+      var f = (p && p.files) || [];
+      return f.map(function (x) { return { title: x.title, when: x.modifiedTime ? fmtDay(x.modifiedTime) : "", sub: (x.mimeType || "").split("/").pop().replace("vnd.google-apps.", "Google "), url: x.viewUrl, raw: (x.title || "") + " | Drive file modified " + (x.modifiedTime || "") }; });
+    }
+  };
+  var domMap = { cal: ["cal", "cal-meta", "Nothing on the calendar in the next 7 days."], mail: ["mail", "mail-meta", "No unread mail from the last 7 days."], notion: ["notion", "notion-meta", "No recent Notion pages found."], drive: ["drive", "drive-meta", "No recent Drive files found."] };
+
+  function handle(key) {
+    return function (ev) {
+      if (ev.type === "error") {
+        if (state[key]) { srcStatus[key] = "stale"; renderSources(); } else renderErr(domMap[key][0], key, ev.error);
+        return;
+      }
+      var rows = parsers[key](ev.result && ev.result.payload);
+      state[key] = rows; srcStatus[key] = "ok"; renderSources();
+      renderList(domMap[key][0], domMap[key][1], rows, domMap[key][2]); stampNow();
+    };
+  }
+
+  function startWatches() {
+    unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = [];
+    var opt = { refetchInterval: 300000 };
+    unsubs.push(mcp.watchTool("Google Calendar", "list_events", { pageSize: 25, orderBy: "startTime" }, handle("cal"), opt));
+    unsubs.push(mcp.watchTool("Gmail", "search_threads", { query: "is:unread in:inbox newer_than:7d", pageSize: 15, view: "THREAD_VIEW_SUMMARY" }, handle("mail"), opt));
+    unsubs.push(mcp.watchTool("Notion", "notion-search", { query: "", sort: "last_edited", page_size: 10, max_highlight_length: 0 }, handle("notion"), opt));
+    unsubs.push(mcp.watchTool("Google Drive", "list_recent_files", { pageSize: 10, excludeContentSnippets: true }, handle("drive"), opt));
+  }
+
+  /* Chief of Staff: routing */
+  function catalog() { return AGENTS.map(function (a) { return a.id + ": " + a.name + " (" + a.scope + ")"; }).join("\n"); }
+
+  async function route(task) {
+    var r = await sample.json(
+      "You are the Chief of Staff agent. Pick the single best specialist agent for this task.\nAgents:\n" + catalog() +
+      "\n\nTask: " + task + "\n\nReturn JSON only: {\"agent\": \"<id>\", \"reason\": \"<one plain sentence>\", \"needs\": \"<one short question if critical info is missing, else empty string>\"}. " + NO_DASH,
+      { modelTier: "quick", cache: false });
+    if (!r || !byId[r.agent]) r = { agent: "gov", reason: "Defaulted to the Government Advisor because the task did not clearly match a specialist.", needs: "" };
+    return r;
+  }
+
+  function contextBlock() {
+    var parts = [];
+    ["cal", "mail", "notion", "drive"].forEach(function (k) { if (state[k] && state[k].length) parts.push(SRC[k] + ":\n" + state[k].slice(0, 10).map(function (x) { return "- " + x.raw; }).join("\n")); });
+    return parts.join("\n\n");
+  }
+
+  async function runTask() {
+    var task = $("task").value.trim();
+    if (!task || state.busy) return;
+    state.busy = true; $("go").disabled = true; $("copy").hidden = true;
+    var routeBox = $("route"), out = $("out");
+    out.hidden = true; clear(out);
+    try {
+      var chosen;
+      if (state.selectedAgent) chosen = { agent: state.selectedAgent, reason: "You sent this directly to " + byId[state.selectedAgent].name + ".", needs: "" };
+      else { $("cmd-status").textContent = "Chief of Staff is choosing an agent..."; chosen = await route(task); }
+      var ag = byId[chosen.agent];
+      clear(routeBox); routeBox.hidden = false;
+      var b = el("b", null, "Routed to " + ag.name); routeBox.appendChild(b); routeBox.appendChild(el("div", null, chosen.reason));
+      if (chosen.needs) routeBox.appendChild(el("div", { class: "note" }, "Open question: " + chosen.needs));
+      $("cmd-status").textContent = ag.name + " is working...";
+      out.hidden = false; out.textContent = "Working...";
+      var prompt = ag.brief + "\n\n" + NO_DASH +
+        "\n\nContext from the user's connected tools (titles only, may be incomplete):\n" + (contextBlock() || "none loaded") +
+        "\n\nState your assumptions at the top if details are missing, then deliver. End with 3 to 7 targeted questions to improve version 2.\n\nTask: " + task;
+      await sample(prompt, { modelTier: "complex", cache: false, onText: function (u) { out.textContent = u.text; } });
+      $("copy").hidden = false; $("cmd-status").textContent = "Done. Review before using. Nothing was sent.";
+    } catch (e) {
+      out.hidden = false; out.textContent = ""; var m = el("div", { class: "err" }, e && e.code === "not_granted" ? "Claude access was not allowed for this page, so the agents cannot run." : e && e.code === "rate_limited" ? "Too many requests. Wait a minute and try again." : "The agent could not finish. Try again.");
+      out.appendChild(m); $("cmd-status").textContent = "";
+    } finally { state.busy = false; $("go").disabled = false; }
+  }
+
+  /* Chief of Staff: daily brief */
+  async function runBrief() {
+    if (state.busy) return;
+    state.busy = true; $("brief").disabled = true; $("focus-meta").textContent = "ranking...";
+    try {
+      var ctx = contextBlock();
+      if (!ctx) { $("focus").replaceChildren(el("p", { class: "empty" }, "No source data has loaded yet. Check the Connected sources panel, refresh, and run the brief again.")); $("focus-meta").textContent = ""; return; }
+      var today = new Date().toISOString().slice(0, 10);
+      var res = await sample.json(
+        "You are the Chief of Staff for a busy leader who runs Ontario nonprofit grant work and government consulting. Today is " + today + ". From the items below, pick the 3 to 6 things that most deserve attention today. Ignore promotions, shipping notices and newsletters unless they carry a deadline. Rank by deadline, consequence of delay, and public or funder impact.\n\nItems:\n" + ctx +
+        "\n\nAgents you can assign:\n" + catalog() +
+        "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings or emails. " + NO_DASH,
+        { modelTier: "default", cache: false });
+      var box = $("focus"); clear(box);
+      if (res.summary) box.appendChild(el("p", { class: "note", style: "margin:0 0 4px" }, res.summary));
+      (res.focus || []).forEach(function (f) {
+        var pr = ["high", "medium", "low"].indexOf(f.priority) >= 0 ? f.priority : "medium";
+        var ag = byId[f.agent] || byId.gov;
+        var it = el("div", { class: "item " + pr }); it.appendChild(el("div", { class: "bar" }));
+        var mid = el("div"); mid.appendChild(el("h3", null, f.title || "")); mid.appendChild(el("p", null, f.why || ""));
+        var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, pr + " priority")); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch);
+        it.appendChild(mid);
+        var go = el("button", { class: "btn", type: "button" }, "Hand off");
+        go.addEventListener("click", function () { state.selectedAgent = ag.id; renderAgents(); $("task").value = f.suggested_task || f.title || ""; $("cmd-status").textContent = "Loaded for " + ag.name + ". Press Route and run."; $("task").scrollIntoView({ behavior: "smooth", block: "center" }); });
+        it.appendChild(go); box.appendChild(it);
+      });
+      $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+    } catch (e) {
+      $("focus").replaceChildren(el("div", { class: "err" }, e && e.code === "not_granted" ? "Claude access was not allowed for this page, so the brief cannot run." : "The brief could not finish. Try again."));
+      $("focus-meta").textContent = "";
+    } finally { state.busy = false; $("brief").disabled = false; }
+  }
+
+  $("go").addEventListener("click", runTask);
+  $("brief").addEventListener("click", runBrief);
+  $("copy").addEventListener("click", function () {
+    var t = $("out").textContent;
+    var done = function (ok) { $("cmd-status").textContent = ok ? "Copied." : "Copy was blocked. Select the text and copy it by hand."; };
+    try { navigator.clipboard.writeText(t).then(function () { done(true); }, function () { done(false); }); } catch (e) { done(false); }
+  });
+  $("refresh").addEventListener("click", function () {
+    if (!mcp) return;
+    $("refresh").disabled = true;
+    mcp.invalidate().catch(function () {}).then(function () { $("refresh").disabled = false; });
+  });
+
+  /* boot capabilities */
+  Promise.all([window.claude ? window.claude.use("mcp") : null, window.claude ? window.claude.use("sample") : null]).then(function (r) {
+    mcp = r[0]; sample = r[1];
+    if (!mcp) { ["cal", "mail", "notion", "drive"].forEach(function (k) { srcStatus[k] = "unavailable here"; var d = domMap[k]; $(d[0]).appendChild(el("p", { class: "empty" }, "Connectors are not available in this view. Open the page inside Claude to load live data.")); }); renderSources(); }
+    else startWatches();
+    if (!sample) { $("go").disabled = true; $("brief").disabled = true; $("cmd-status").textContent = "Agents need Claude access, which is not available in this view."; }
+  });
+})();
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap">
