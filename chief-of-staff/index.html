@@ -715,7 +715,7 @@ renderSources();
   /* ---- status board, thresholds, runway, consulting, tabs, remembered brief ---- */
   var ragReady = false;
   var RAGWORD = { red: "Act now", yellow: "Watch", green: "On track", grey: "Loading" };
-  var DEFAULT_TH = { inboxYellow: 20, inboxRed: 50, calYellow: 4, calRed: 8, dlRed: 7, dlYellow: 21, focusWeek: 7, consultYellow: 7 };
+  var DEFAULT_TH = { inboxYellow: 5, inboxRed: 10, calYellow: 4, calRed: 8, dlRed: 7, dlYellow: 21, focusWeek: 7, consultYellow: 7 };
   var TH = Object.assign({}, DEFAULT_TH);
   var consulting = [], consultLoaded = false;
   var STAGES = ["Idea", "Lead", "Proposal", "Active", "On hold", "Delivered"];
@@ -896,7 +896,9 @@ renderSources();
       ho.addEventListener("click", function () { state.selectedAgent = "gov"; renderAgents(); $("task").value = "Plan the next step for '" + c.name + "' (stage: " + c.stage + (c.next ? "; current next step: " + c.next : "") + "). Give three options and a recommendation."; $("cmd-status").textContent = "Loaded for the Government Advisor. Press Route and run."; location.hash = "agents"; });
       var del = el("button", { class: "btn small", type: "button", "aria-label": "Remove " + c.name }, "Remove");
       del.addEventListener("click", function () { db.doc("consulting/" + c.id).delete().catch(function () {}); });
-      act.appendChild(ho); act.appendChild(del); r.appendChild(act); box.appendChild(r);
+      var wk = el("button", { class: "btn small", type: "button", title: "Mark this week's step done and set the next one for a week from today" }, "Done, next in a week");
+      wk.addEventListener("click", function () { var nd = new Date(); nd.setDate(nd.getDate() + 7); db.doc("consulting/" + c.id).update({ nextDue: localISO(nd) }).catch(function () {}); });
+      act.appendChild(wk); act.appendChild(ho); act.appendChild(del); r.appendChild(act); box.appendChild(r);
     });
   }
   $("c-add").addEventListener("click", function () {
