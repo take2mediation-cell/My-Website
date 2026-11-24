@@ -89,6 +89,7 @@ header.top p { margin: 0; color: var(--muted); }
 .tab.on { color: var(--fg); font-weight: 700; border-bottom-color: var(--accent); }
 .tab .n { font-family: var(--font-mono); font-size: 11px; background: var(--surface-2); border-radius: 99px; padding: 1px 7px; margin-left: 6px; }
 .pane { display: grid; gap: 16px; min-width: 0; }
+.pane[hidden] { display: none; }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
 @media (max-width: 900px) { .cols { grid-template-columns: minmax(0,1fr); } }
 .col { display: grid; gap: 16px; min-width: 0; }
@@ -193,6 +194,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
     <article class="tile" id="t-deadlines"><div class="top"><span class="name">Grant deadlines</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
     <article class="tile" id="t-inbox"><div class="top"><span class="name">Inbox</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
     <article class="tile" id="t-cal"><div class="top"><span class="name">Next 48 hours</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+    <article class="tile" id="t-consult"><div class="top"><span class="name">Consulting</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
     <article class="tile" id="t-focus"><div class="top"><span class="name">Top priorities</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
     <article class="tile" id="t-src"><div class="top"><span class="name">Connections</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
   </section>
@@ -200,8 +202,10 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab on" id="tb-overview" role="tab" type="button" aria-selected="true">Overview</button>
     <button class="tab" id="tb-deadlines" role="tab" type="button" aria-selected="false">Grant deadlines<span class="n" id="tb-deadlines-n">0</span></button>
+    <button class="tab" id="tb-consult" role="tab" type="button" aria-selected="false">Consulting<span class="n" id="tb-consult-n">0</span></button>
     <button class="tab" id="tb-work" role="tab" type="button" aria-selected="false">Inbox and calendar</button>
     <button class="tab" id="tb-agents" role="tab" type="button" aria-selected="false">Agents</button>
+    <button class="tab" id="tb-settings" role="tab" type="button" aria-selected="false">Settings</button>
   </nav>
 
   <div class="pane" id="tab-overview" role="tabpanel">
@@ -209,7 +213,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
       <h2 id="rw-h">Deadline runway, next 90 days <small id="rw-meta"></small></h2>
       <div class="note" style="margin-bottom:4px">Today</div>
       <div class="rw" id="runway" role="img" aria-label="Timeline of upcoming grant deadlines"></div>
-      <div class="ticks" aria-hidden="true"><span style="left:0">&nbsp;</span><span style="left:7.78%">7 days</span><span style="left:23.33%">21 days</span><span style="left:100%">90 days</span></div>
+      <div class="ticks" aria-hidden="true"><span style="left:0">&nbsp;</span><span id="tk-a" style="left:7.78%">7 days</span><span id="tk-b" style="left:23.33%">21 days</span><span style="left:100%">90 days</span></div>
       <div id="up"></div>
     </section>
     <section class="panel" aria-labelledby="focus-h">
@@ -233,6 +237,23 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
       <details class="imp"><summary>Import dates from Sintra AI</summary><p class="note">Sintra has no connector here. Paste its deadline list or upload an export (.csv, .txt, .md, .json, up to 150 KB). The Chief of Staff reads it and proposes entries. You approve each one before it is tracked.</p><textarea id="imp-text" aria-label="Pasted Sintra deadline list" placeholder="Paste text here"></textarea><div class="row"><input id="imp-file" type="file" accept=".csv,.txt,.md,.json,text/*" aria-label="Upload a Sintra export"><button class="btn" id="imp-go" type="button">Read it</button><span class="note" id="imp-status"></span></div></details>
       <div id="dl-list"></div>
       <div class="cands" id="dl-cands" hidden></div>
+    </section>
+  </div>
+
+  <div class="pane" id="tab-consult" role="tabpanel" hidden>
+    <section class="panel" aria-labelledby="c-h">
+      <h2 id="c-h"><span>Consulting work</span> <small id="c-meta"></small></h2>
+      <div class="row" id="c-summary" style="margin-bottom:12px"></div>
+      <div class="dl-form" id="c-form">
+        <label for="c-name">Engagement or venture<input id="c-name" type="text" placeholder="Name"></label>
+        <label for="c-client">Client or audience<input id="c-client" type="text" placeholder="Who it is for"></label>
+        <label for="c-stage">Stage<select id="c-stage"></select></label>
+        <label for="c-next">Next step<input id="c-next" type="text" placeholder="What happens next"></label>
+        <label for="c-due">Next step date<input id="c-due" type="date"></label>
+        <button class="btn primary" id="c-add" type="button">Add item</button>
+      </div>
+      <p class="note" style="margin:0 0 8px">Red means the next step date has passed. Yellow means no next date or due within the soon window. Green means scheduled. Delivered and on hold items show grey.</p>
+      <div id="c-list"></div>
     </section>
   </div>
 
@@ -285,6 +306,14 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
         </section>
       </aside>
     </div>
+  </div>
+  <div class="pane" id="tab-settings" role="tabpanel" hidden>
+    <section class="panel" aria-labelledby="set-h">
+      <h2 id="set-h">Colour limits</h2>
+      <p class="note" style="margin:0 0 10px">These decide when each tile turns yellow or red. The starting values are placeholders. Set the numbers that match how you work, then save.</p>
+      <div class="dl-form" id="settings-form"></div>
+      <div class="row"><button class="btn primary" id="set-save" type="button">Save limits</button><button class="btn" id="set-reset" type="button">Reset to starting values</button><span class="note" id="set-status"></span></div>
+    </section>
   </div>
 </div>
 
@@ -407,8 +436,8 @@ renderSources();
   var parsers = {
     gcal: function (res) { return (pay(res).events || []).map(function (e) { var st = (e.start && (e.start.dateTime || e.start.date)) || ""; return { title: e.summary, ts: ts(st), when: st ? fmtDay(st) : "", sub: "Google Calendar" + (e.start && e.start.dateTime ? ", " + fmtTime(st) : ", all day"), url: e.htmlLink, raw: "Google Calendar event: " + (e.summary || "") + " | " + st }; }); },
     ocal: function (res) { return blocksOf(res).filter(function (x) { return x && x.subject; }).map(function (x) { var st = startOf(x); return { title: x.subject, ts: ts(st), when: st ? fmtDay(st) : "", sub: "Outlook calendar" + (st ? ", " + fmtTime(st) : ""), url: x.webLink, raw: "Outlook calendar event: " + x.subject + " | " + st }; }); },
-    gmail: function (res) { return (pay(res).threads || []).map(function (t) { var m = (t.messages && t.messages[0]) || {}; return { title: m.subject, ts: ts(m.date), when: m.date ? fmtDay(m.date) : "", sub: "Gmail, " + senderName(m.sender), url: t.viewUrl || m.viewUrl, raw: "Gmail unread: " + (m.subject || "") + " | from " + senderName(m.sender) }; }); },
-    omail: function (res) { return blocksOf(res).filter(function (x) { return x && x.subject && x.isRead === false; }).slice(0, 12).map(function (x) { return { title: x.subject, ts: ts(x.receivedDateTime), when: x.receivedDateTime ? fmtDay(x.receivedDateTime) : "", sub: "Outlook, " + (x.senderName || senderName(x.sender)), url: x.webLink, raw: "Outlook unread: " + x.subject + " | from " + (x.senderName || x.sender) + " | " + String(x.summary || "").replace(/[\u200b-\u200f\u034f\ufeff\s]+/g, " ").slice(0, 120) }; }); },
+    gmail: function (res) { var pc = parseInt(pay(res).resultCountEstimate, 10); state.gcount = isNaN(pc) ? null : pc; return (pay(res).threads || []).map(function (t) { var m = (t.messages && t.messages[0]) || {}; return { title: m.subject, ts: ts(m.date), when: m.date ? fmtDay(m.date) : "", sub: "Gmail, " + senderName(m.sender), url: t.viewUrl || m.viewUrl, raw: "Gmail unread: " + (m.subject || "") + " | from " + senderName(m.sender) }; }); },
+    omail: function (res) { return blocksOf(res).filter(function (x) { return x && x.subject && x.isRead === false; }).map(function (x) { return { title: x.subject, ts: ts(x.receivedDateTime), when: x.receivedDateTime ? fmtDay(x.receivedDateTime) : "", sub: "Outlook, " + (x.senderName || senderName(x.sender)), url: x.webLink, raw: "Outlook unread: " + x.subject + " | from " + (x.senderName || x.sender) + " | " + String(x.summary || "").replace(/[\u200b-\u200f\u034f\ufeff\s]+/g, " ").slice(0, 120) }; }); },
     notion: function (res) { return (pay(res).results || []).map(function (x) { return { title: x.title, ts: ts(x.timestamp), when: x.timestamp ? fmtDay(x.timestamp) : "", sub: "Notion " + x.type, url: x.url, raw: "Notion " + x.type + ": " + (x.title || "") + " | edited " + (x.timestamp || "") }; }); },
     drive: function (res) { return (pay(res).files || []).map(function (x) { return { title: x.title, ts: ts(x.modifiedTime), when: x.modifiedTime ? fmtDay(x.modifiedTime) : "", sub: (x.mimeType || "").split("/").pop().replace("vnd.google-apps.", "Google "), url: x.viewUrl, raw: "Drive file: " + (x.title || "") + " | modified " + (x.modifiedTime || "") }; }); }
   };
@@ -455,7 +484,7 @@ renderSources();
     var opt = { refetchInterval: 300000 };
     unsubs.push(mcp.watchTool("Microsoft 365", "outlook_email_search", { order: "newest", limit: 25 }, handle("omail"), opt));
     unsubs.push(mcp.watchTool("Microsoft 365", "outlook_calendar_search", { query: "*", afterDateTime: "today", beforeDateTime: "in 7 days", limit: 25 }, handle("ocal"), opt));
-    unsubs.push(mcp.watchTool("Gmail", "search_threads", { query: "is:unread in:inbox newer_than:7d", pageSize: 15, view: "THREAD_VIEW_SUMMARY" }, handle("gmail"), opt));
+    unsubs.push(mcp.watchTool("Gmail", "search_threads", { query: "is:unread in:inbox newer_than:7d", pageSize: 50, view: "THREAD_VIEW_SUMMARY" }, handle("gmail"), opt));
     unsubs.push(mcp.watchTool("Google Calendar", "list_events", { pageSize: 25, orderBy: "startTime" }, handle("gcal"), opt));
     unsubs.push(mcp.watchTool("Notion", "notion-search", { query: "", sort: "last_edited", page_size: 10, max_highlight_length: 0 }, handle("notion"), opt));
     unsubs.push(mcp.watchTool("Google Drive", "list_recent_files", { pageSize: 10, excludeContentSnippets: true }, handle("drive"), opt));
@@ -653,7 +682,7 @@ renderSources();
       if (!ctx) { $("focus").replaceChildren(el("p", { class: "empty" }, "No source data has loaded yet. Check the Connected sources panel, refresh, and run the brief again.")); $("focus-meta").textContent = ""; return; }
       var res = await sample.json("You are the Chief of Staff for a busy leader who runs Ontario nonprofit grant work and government consulting. Today is " + today() + ". From the items below, pick the 3 to 6 things that most deserve attention today. Ignore promotions, shipping notices and newsletters unless they carry a deadline. Any tracked grant deadline due within 14 days or overdue must appear and rank high. Rank by deadline, consequence of delay, and public or funder impact.\n\nItems:\n" + ctx +
         "\n\nAgents you can assign:\n" + catalog() +
-        "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings, emails or dates. " + NO_DASH, { modelTier: "default", cache: false });
+        "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"due\": \"<YYYY-MM-DD only when a source states a due or meeting date, otherwise empty string>\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings, emails or dates. " + NO_DASH, { modelTier: "default", cache: false });
       renderFocus(res); state.lastBrief = res; saveBrief(res); computeRag(); $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
       $("save-notion").hidden = !mcp || !(res.focus && res.focus.length);
     } catch (e) {
@@ -683,9 +712,14 @@ renderSources();
   $("refresh").addEventListener("click", function () { if (!mcp) return; $("refresh").disabled = true; mcp.invalidate().catch(function () {}).then(function () { $("refresh").disabled = false; }); });
 
 
-  /* ---- status board, runway, tabs, remembered brief ---- */
+  /* ---- status board, thresholds, runway, consulting, tabs, remembered brief ---- */
   var ragReady = false;
   var RAGWORD = { red: "Act now", yellow: "Watch", green: "On track", grey: "Loading" };
+  var DEFAULT_TH = { inboxYellow: 20, inboxRed: 50, calYellow: 4, calRed: 8, dlRed: 7, dlYellow: 21, focusWeek: 7, consultYellow: 7 };
+  var TH = Object.assign({}, DEFAULT_TH);
+  var consulting = [], consultLoaded = false;
+  var STAGES = ["Idea", "Lead", "Proposal", "Active", "On hold", "Delivered"];
+
   function glyph(st, size) {
     var s = size || 24, body;
     if (st === "green") body = '<circle class="c" cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="var(--on)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -702,13 +736,29 @@ renderSources();
     t.querySelector(".why").textContent = why;
   }
   var worst = function (list) { return list.indexOf("red") >= 0 ? "red" : list.indexOf("yellow") >= 0 ? "yellow" : list.indexOf("green") >= 0 ? "green" : "grey"; };
-
   function openDated() {
     return deadlines.filter(function (d) { return d.status !== "submitted" && d.due; })
       .map(function (d) { return { d: d, n: daysLeft(d.due) }; }).sort(function (a, b) { return a.n - b.n; });
   }
   function dayWord(n) { return n < 0 ? Math.abs(n) + (Math.abs(n) === 1 ? " day overdue" : " days overdue") : n === 0 ? "due today" : n === 1 ? "1 day left" : n + " days left"; }
-  function ragOfDays(n) { return n <= 7 ? "red" : n <= 21 ? "yellow" : "green"; }
+  function ragOfDays(n) { return n <= TH.dlRed ? "red" : n <= TH.dlYellow ? "yellow" : "green"; }
+  function chipOf(st) { return st === "red" ? "high" : st === "yellow" ? "medium" : st === "green" ? "low" : ""; }
+
+  /* consulting item status */
+  function cRag(c) {
+    if (c.stage === "Delivered" || c.stage === "On hold") return "grey";
+    if (!c.nextDue) return "yellow";
+    var n = daysLeft(c.nextDue);
+    return n < 0 ? "red" : n <= TH.consultYellow ? "yellow" : "green";
+  }
+  function cWord(c) {
+    var s = cRag(c);
+    if (s === "grey") return c.stage;
+    if (!c.nextDue) return "No next date";
+    var n = daysLeft(c.nextDue);
+    return n < 0 ? Math.abs(n) + (Math.abs(n) === 1 ? " day overdue" : " days overdue") : n === 0 ? "Due today" : "In " + n + (n === 1 ? " day" : " days");
+  }
+  var ORDER = { red: 0, yellow: 1, green: 2, grey: 3 };
 
   function computeRag() {
     if (!ragReady) return;
@@ -720,38 +770,55 @@ renderSources();
     else {
       var dated = openDated(), open = deadlines.filter(function (d) { return d.status !== "submitted"; }), undated = open.length - dated.length;
       var over = dated.filter(function (x) { return x.n < 0; }).length;
-      if (dated.length && dated[0].n <= 7) { sDl = "red"; vDl = over ? over + " overdue" : dated[0].n === 0 ? "Today" : dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
-      else if (dated.length && dated[0].n <= 21) { sDl = "yellow"; vDl = dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
+      if (dated.length && dated[0].n <= TH.dlRed) { sDl = "red"; vDl = over ? over + " overdue" : dated[0].n === 0 ? "Today" : dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
+      else if (dated.length && dated[0].n <= TH.dlYellow) { sDl = "yellow"; vDl = dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
       else if (undated) { sDl = "yellow"; vDl = undated + " undated"; wDl = "Add a due date to each open item" + (dated.length ? ". Next dated: " + dated[0].d.title + ", " + dayWord(dated[0].n) : ""); }
       else if (dated.length) { sDl = "green"; vDl = dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
       else { sDl = "green"; vDl = "None open"; wDl = "No open grant deadlines tracked"; }
     }
     setTile("t-deadlines", sDl, vDl, wDl); out.push(sDl); if (sDl === "red" || sDl === "yellow") why.push("Grant deadlines: " + vDl + ". " + wDl + ".");
 
+    /* consulting */
+    var sC = "grey", vC = "...", wC = "Loading consulting work";
+    if (!db) { vC = "n/a"; wC = "Saving is not available in this view"; }
+    else if (consultLoaded) {
+      var live = consulting.filter(function (c) { return cRag(c) !== "grey"; });
+      var rr = live.filter(function (c) { return cRag(c) === "red"; }), yy = live.filter(function (c) { return cRag(c) === "yellow"; });
+      if (!consulting.length) { vC = "None"; wC = "Add your first consulting item"; }
+      else if (!live.length) { vC = "0 active"; wC = "Everything is delivered or on hold"; }
+      else if (rr.length) { sC = "red"; vC = rr.length + " overdue"; wC = "Next step past due: " + rr[0].name; }
+      else if (yy.length) { sC = "yellow"; vC = yy.length + " to schedule"; wC = "Needs a next date or due soon: " + yy[0].name; }
+      else { sC = "green"; vC = live.length + " on track"; wC = "All next steps are scheduled"; }
+    }
+    setTile("t-consult", sC, vC, wC); out.push(sC); if (sC === "red" || sC === "yellow") why.push("Consulting: " + vC + ". " + wC + ".");
+
     /* inbox */
-    var mailRows = (state.rows.omail || []).length + (state.rows.gmail || []).length;
-    var mailKnown = state.rows.omail || state.rows.gmail;
-    var sIn = !mailKnown ? "grey" : mailRows <= 5 ? "green" : mailRows <= 15 ? "yellow" : "red";
-    setTile("t-inbox", sIn, mailKnown ? String(mailRows) : "...", mailKnown ? "Unread in Outlook and Gmail, latest messages" : "Waiting for mail");
-    out.push(sIn); if (sIn === "red" || sIn === "yellow") why.push("Inbox: " + mailRows + " unread.");
+    var oN = (state.rows.omail || []).length, gN = state.gcount != null ? state.gcount : (state.rows.gmail || []).length;
+    var mailKnown = state.rows.omail || state.rows.gmail, tot = oN + gN;
+    var sIn = !mailKnown ? "grey" : tot <= TH.inboxYellow ? "green" : tot <= TH.inboxRed ? "yellow" : "red";
+    setTile("t-inbox", sIn, mailKnown ? String(tot) : "...", mailKnown ? "Unread. Outlook counts its 25 newest only" : "Waiting for mail");
+    out.push(sIn); if (sIn === "red" || sIn === "yellow") why.push("Inbox: " + tot + " unread.");
 
     /* next 48 hours */
     var calKnown = state.rows.ocal || state.rows.gcal, sCal = "grey", vCal = "...", wCal = "Waiting for calendars";
     if (calKnown) {
       var now = Date.now(), lim = now + 48 * 3600000;
       var ev = (state.rows.ocal || []).concat(state.rows.gcal || []).filter(function (r) { return r.ts && r.ts >= now - 3600000 && r.ts <= lim; }).sort(function (a, b) { return a.ts - b.ts; });
-      sCal = ev.length <= 3 ? "green" : ev.length <= 6 ? "yellow" : "red"; vCal = String(ev.length);
+      sCal = ev.length <= TH.calYellow ? "green" : ev.length <= TH.calRed ? "yellow" : "red"; vCal = String(ev.length);
       wCal = ev.length ? "Next: " + ev[0].title + ", " + fmtDay(ev[0].ts) + " " + fmtTime(ev[0].ts) : "Nothing booked in the next 48 hours";
     }
     setTile("t-cal", sCal, vCal, wCal); out.push(sCal); if (sCal === "red" || sCal === "yellow") why.push("Calendar: " + vCal + " events in 48 hours.");
 
-    /* top priorities from the last brief */
+    /* top priorities: red only for high priority items due this week */
     var sF = "grey", vF = "No brief", wF = "Run the Chief of Staff brief";
     if (state.lastBrief && state.lastBrief.focus) {
-      var hi = state.lastBrief.focus.filter(function (f) { return f.priority === "high"; }).length;
-      sF = hi === 0 ? "green" : hi <= 2 ? "yellow" : "red"; vF = hi + " high"; wF = state.lastBrief.focus.length + " items ranked" + (state.lastBriefAt ? ", " + fmtDay(state.lastBriefAt) + " " + fmtTime(state.lastBriefAt) : "");
+      var hi = state.lastBrief.focus.filter(function (f) { return f.priority === "high"; });
+      var hiWk = hi.filter(function (f) { var n = f.due ? daysLeft(f.due) : null; return n !== null && n <= TH.focusWeek; });
+      sF = hiWk.length ? "red" : hi.length ? "yellow" : "green";
+      vF = hiWk.length + " this week";
+      wF = hi.length + " high priority, " + hiWk.length + " due within " + TH.focusWeek + " days" + (state.lastBriefAt ? ". Brief " + fmtDay(state.lastBriefAt) + " " + fmtTime(state.lastBriefAt) : "");
     }
-    setTile("t-focus", sF, vF, wF); out.push(sF); if (sF === "red" || sF === "yellow") why.push("Priorities: " + vF + " in the latest brief.");
+    setTile("t-focus", sF, vF, wF); out.push(sF); if (sF === "red" || sF === "yellow") why.push("Priorities: " + vF + ".");
 
     /* connections */
     var ok = 0, bad = 0, stale = 0;
@@ -760,23 +827,26 @@ renderSources();
     setTile("t-src", sS, ok + " of " + KEYS.length, bad ? bad + " not connected or blocked. See the Agents tab" : stale ? "Showing older data for " + stale : ok === KEYS.length ? "All sources live" : "Connecting");
     out.push(sS); if (sS === "red" || sS === "yellow") why.push("Connections: " + ok + " of " + KEYS.length + " live.");
 
-    /* overall banner */
     var all = worst(out), b = $("banner");
     b.className = "banner " + all; $("banner-glyph").innerHTML = glyph(all, 56); $("banner-word").textContent = RAGWORD[all];
     $("banner-text").textContent = all === "grey" ? "Reading your calendar, mail and deadlines." : why.length ? why.slice(0, 2).join(" ") : "Nothing needs urgent action. Every area is within its limits.";
     document.title = (all === "red" ? "Act now" : all === "yellow" ? "Watch" : all === "green" ? "On track" : "Loading") + " | Chief of Staff Console";
     renderRunway();
     if (db && dlLoaded) $("tb-deadlines-n").textContent = String(deadlines.filter(function (d) { return d.status !== "submitted"; }).length);
+    if (db && consultLoaded) $("tb-consult-n").textContent = String(consulting.filter(function (c) { return cRag(c) !== "grey"; }).length);
   }
 
   function renderRunway() {
     var box = $("runway"); clear(box); box.appendChild(el("div", { class: "now" }));
+    var a = TH.dlRed / 90 * 100, b2 = TH.dlYellow / 90 * 100;
+    box.style.background = "linear-gradient(90deg, var(--r-soft) 0 " + a + "%, var(--y-soft) " + a + "% " + b2 + "%, var(--g-soft) " + b2 + "% 100%)";
+    $("tk-a").style.left = a + "%"; $("tk-a").textContent = TH.dlRed + " days"; $("tk-b").style.left = b2 + "%"; $("tk-b").textContent = TH.dlYellow + " days";
     var up = $("up"); clear(up);
     if (!db || !dlLoaded) { $("rw-meta").textContent = ""; return; }
     var dated = openDated(), inWin = dated.filter(function (x) { return x.n >= 0 && x.n <= 90; });
     var over = dated.filter(function (x) { return x.n < 0; }), later = dated.filter(function (x) { return x.n > 90; }).length;
     var undated = deadlines.filter(function (d) { return d.status !== "submitted" && !d.due; }).length;
-    var rows = [], lastPct = -10, rowIdx = 0;
+    var lastPct = -10, rowIdx = 0;
     inWin.forEach(function (x) {
       var pct = x.n / 90 * 100; rowIdx = (pct - lastPct < 3.5) ? (rowIdx + 1) % 3 : 0; lastPct = pct;
       var p = el("div", { class: "pin " + ragOfDays(x.n), title: x.d.title + ", " + dayWord(x.n) });
@@ -788,11 +858,79 @@ renderSources();
     if (!list.length) up.appendChild(el("p", { class: "empty" }, undated ? undated + " open items have no due date yet. Add dates in the Grant deadlines tab so they appear here." : "No dated deadlines in the next 90 days."));
     list.forEach(function (x) {
       var r = el("div", { class: "up" }), st = x.n < 0 ? "red" : ragOfDays(x.n);
-      r.appendChild(el("span", { class: "chip " + (st === "red" ? "high" : st === "yellow" ? "medium" : "low") }, dayWord(x.n)));
+      r.appendChild(el("span", { class: "chip " + chipOf(st) }, dayWord(x.n)));
       var m = el("div"); m.appendChild(el("div", { class: "t" }, x.d.title || "(untitled)")); m.appendChild(el("div", { class: "sub" }, [x.d.funder, "Due " + x.d.due].filter(Boolean).join(" | "))); r.appendChild(m);
       var u = safeUrl(x.d.url); if (u) r.appendChild(el("a", { href: u, target: "_blank", rel: "noopener" }, "Portal")); else r.appendChild(el("span"));
       up.appendChild(r);
     });
+  }
+
+  /* consulting tab */
+  function renderConsulting() {
+    var box = $("c-list"), sum = $("c-summary"); clear(box); clear(sum);
+    if (!db) { box.appendChild(el("p", { class: "empty" }, "Saving is not available in this view. Open the page inside Claude to track consulting work.")); $("c-form").hidden = true; return; }
+    if (!consultLoaded) { box.appendChild(el("p", { class: "empty" }, "Loading consulting work...")); return; }
+    var rows = consulting.slice().sort(function (a, b) { var d = ORDER[cRag(a)] - ORDER[cRag(b)]; return d || (a.nextDue || "9999").localeCompare(b.nextDue || "9999"); });
+    var cnt = { red: 0, yellow: 0, green: 0, grey: 0 }; rows.forEach(function (c) { cnt[cRag(c)]++; });
+    [["red", "Overdue"], ["yellow", "To schedule or soon"], ["green", "On track"], ["grey", "Delivered or on hold"]].forEach(function (p) { sum.appendChild(el("span", { class: "chip " + chipOf(p[0]) }, p[1] + ": " + cnt[p[0]])); });
+    STAGES.forEach(function (s) { var n = rows.filter(function (c) { return c.stage === s; }).length; if (n) sum.appendChild(el("span", { class: "chip" }, s + " " + n)); });
+    $("c-meta").textContent = rows.length + " items";
+    if (!rows.length) box.appendChild(el("p", { class: "empty" }, "Nothing tracked yet. Add an engagement, pitch or venture above."));
+    rows.forEach(function (c) {
+      var st = cRag(c), r = el("div", { class: "dl" + (c.stage === "Delivered" ? " done" : "") });
+      var m = el("div"), head = el("div", { class: "row" });
+      var g = el("span", { class: "glyph", style: "color:" + (st === "red" ? "var(--r-solid)" : st === "yellow" ? "var(--y-solid)" : st === "green" ? "var(--g-solid)" : "var(--n-solid)") + ";--on:var(--surface)" }); g.innerHTML = glyph(st, 22);
+      head.appendChild(g); head.appendChild(el("h3", null, c.name || "(untitled)")); head.appendChild(el("span", { class: "chip " + chipOf(st) }, cWord(c)));
+      m.appendChild(head);
+      if (c.client || c.note) m.appendChild(el("div", { class: "sub" }, [c.client, c.note].filter(Boolean).join(" | ")));
+      var ctl = el("div", { class: "row", style: "margin-top:6px" });
+      var sel = el("select", { "aria-label": "Stage for " + c.name }); STAGES.forEach(function (s) { var o = el("option", { value: s }, s); if (s === c.stage) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener("change", function () { db.doc("consulting/" + c.id).update({ stage: sel.value }).catch(function () {}); });
+      var nx = el("input", { type: "text", value: c.next || "", placeholder: "Next step", "aria-label": "Next step for " + c.name, style: "min-width:160px;flex:1" });
+      nx.addEventListener("change", function () { db.doc("consulting/" + c.id).update({ next: nx.value.trim().slice(0, 200) }).catch(function () {}); });
+      var dt = el("input", { type: "date", value: c.nextDue || "", "aria-label": "Next step date for " + c.name });
+      dt.addEventListener("change", function () { db.doc("consulting/" + c.id).update({ nextDue: dt.value }).catch(function () {}); });
+      ctl.appendChild(sel); ctl.appendChild(nx); ctl.appendChild(dt); m.appendChild(ctl); r.appendChild(m);
+      var act = el("div", { class: "row" });
+      var ho = el("button", { class: "btn small", type: "button" }, "Hand off");
+      ho.addEventListener("click", function () { state.selectedAgent = "gov"; renderAgents(); $("task").value = "Plan the next step for '" + c.name + "' (stage: " + c.stage + (c.next ? "; current next step: " + c.next : "") + "). Give three options and a recommendation."; $("cmd-status").textContent = "Loaded for the Government Advisor. Press Route and run."; location.hash = "agents"; });
+      var del = el("button", { class: "btn small", type: "button", "aria-label": "Remove " + c.name }, "Remove");
+      del.addEventListener("click", function () { db.doc("consulting/" + c.id).delete().catch(function () {}); });
+      act.appendChild(ho); act.appendChild(del); r.appendChild(act); box.appendChild(r);
+    });
+  }
+  $("c-add").addEventListener("click", function () {
+    var n = $("c-name").value.trim(); if (!n) { $("c-name").focus(); return; }
+    if (!db) return;
+    db.collection("consulting").add({ name: n.slice(0, 160), client: $("c-client").value.trim().slice(0, 120), stage: $("c-stage").value, next: $("c-next").value.trim().slice(0, 200), nextDue: $("c-due").value, note: "", createdAt: Date.now() })
+      .then(function () { ["c-name", "c-client", "c-next", "c-due"].forEach(function (i) { $(i).value = ""; }); }).catch(function () {});
+  });
+  STAGES.forEach(function (s) { $("c-stage").appendChild(el("option", { value: s }, s)); });
+
+  /* thresholds */
+  var TH_LABELS = { inboxYellow: "Inbox yellow above (unread)", inboxRed: "Inbox red above (unread)", calYellow: "Next 48 hours yellow above (events)", calRed: "Next 48 hours red above (events)", dlRed: "Grant deadline red within (days)", dlYellow: "Grant deadline yellow within (days)", focusWeek: "A high priority item counts as this week within (days)", consultYellow: "Consulting next step counts as soon within (days)" };
+  function buildSettings() {
+    var f = $("settings-form"); clear(f);
+    Object.keys(DEFAULT_TH).forEach(function (k) { var l = el("label", { for: "th-" + k }, TH_LABELS[k]); l.appendChild(el("input", { id: "th-" + k, type: "number", min: "0", step: "1", value: String(TH[k]) })); f.appendChild(l); });
+  }
+  function renderSettings() { Object.keys(DEFAULT_TH).forEach(function (k) { var i = $("th-" + k); if (i && document.activeElement !== i) i.value = String(TH[k]); }); }
+  buildSettings();
+  $("set-save").addEventListener("click", function () {
+    if (!db) { $("set-status").textContent = "Saving is not available in this view."; return; }
+    var v = {}; Object.keys(DEFAULT_TH).forEach(function (k) { var n = Math.round(Number($("th-" + k).value)); v[k] = isFinite(n) && n >= 0 ? n : DEFAULT_TH[k]; });
+    if (v.inboxRed < v.inboxYellow || v.calRed < v.calYellow || v.dlYellow < v.dlRed) { $("set-status").textContent = "Each red limit must be at or above its yellow limit. For deadlines, yellow days must be at or above red days."; return; }
+    db.doc("settings/thresholds").set(v).then(function () { Object.assign(TH, v); computeRag(); $("set-status").textContent = "Saved."; }).catch(function () { $("set-status").textContent = "Could not save. Check that you have edit access to this page."; });
+  });
+  $("set-reset").addEventListener("click", function () { Object.assign(TH, DEFAULT_TH); buildSettings(); computeRag(); if (db) db.doc("settings/thresholds").set(Object.assign({}, DEFAULT_TH)).catch(function () {}); $("set-status").textContent = "Reset to the starting values."; });
+
+  function startExtraDb() {
+    if (!db) { renderConsulting(); return; }
+    db.doc("settings/thresholds").onSnapshot(function (s) {
+      if (s.exists) { var d = s.data() || {}; Object.keys(DEFAULT_TH).forEach(function (k) { var n = Number(d[k]); if (isFinite(n) && n >= 0) TH[k] = n; }); }
+      renderSettings(); computeRag();
+    }, function () {});
+    renderConsulting();
+    db.collection("consulting").onSnapshot(function (snap) { consultLoaded = true; consulting = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); renderConsulting(); computeRag(); }, function () { consultLoaded = true; renderConsulting(); computeRag(); });
   }
 
   /* focus list with red, yellow, green items; remembered between visits */
@@ -805,7 +943,9 @@ renderSources();
       var it = el("div", { class: "item " + pr });
       var g = el("span", { class: "glyph" }); g.innerHTML = glyph(PRI[pr], 26); it.appendChild(g);
       var mid = el("div"); mid.appendChild(el("h3", null, f.title || "")); mid.appendChild(el("p", null, f.why || ""));
-      var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, RAGWORD[PRI[pr]])); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch); it.appendChild(mid);
+      var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, RAGWORD[PRI[pr]]));
+      var dn = f.due ? daysLeft(f.due) : null; if (dn !== null) ch.appendChild(el("span", { class: "chip" }, "Due " + f.due + (dn <= TH.focusWeek ? " (this week)" : "")));
+      ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch); it.appendChild(mid);
       var go = el("button", { class: "btn", type: "button" }, "Hand off");
       go.addEventListener("click", function () { state.selectedAgent = ag.id; renderAgents(); $("task").value = f.suggested_task || f.title || ""; $("cmd-status").textContent = "Loaded for " + ag.name + ". Press Route and run."; location.hash = "agents"; });
       it.appendChild(go); box.appendChild(it);
@@ -820,7 +960,7 @@ renderSources();
   }
 
   /* tabs */
-  var TABS = ["overview", "deadlines", "work", "agents"];
+  var TABS = ["overview", "deadlines", "consult", "work", "agents", "settings"];
   function showTab(name) {
     if (TABS.indexOf(name) < 0) name = "overview";
     TABS.forEach(function (t) { $("tab-" + t).hidden = t !== name; var b = $("tb-" + t); b.setAttribute("aria-selected", t === name ? "true" : "false"); b.classList.toggle("on", t === name); });
@@ -842,6 +982,7 @@ renderSources();
       $("dl-scan").disabled = true;
     } else startWatches();
     if (!sample) { $("go").disabled = true; $("brief").disabled = true; $("dl-scan").disabled = true; $("cmd-status").textContent = "Agents need Claude access, which is not available in this view."; }
+    startExtraDb();
     if (db) {
       renderDeadlines();
       var timer = setTimeout(function () { if (!dlLoaded) { clear($("dl-list")); $("dl-list").appendChild(el("div", { class: "err" }, "Could not load tracked deadlines. Reload the page to try again.")); } }, 10000);
