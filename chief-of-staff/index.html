@@ -1,83 +1,137 @@
 <title>Chief of Staff Console</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout: main column with focus list, command bar, grant deadlines and live source panels; right rail with agent roster and source status. */
+/* Layout: status banner and five red/yellow/green tiles first, then four tabs (Overview, Grant deadlines, Inbox and calendar, Agents). */
 :root {
-  --bg: #f4f5f3;
+  --bg: #f2f5f8;
   --surface: #ffffff;
-  --surface-2: #eceeea;
-  --fg: #1b2420;
-  --muted: #5d6a63;
-  --line: #d9ddd7;
-  --accent: #1f5c4a;
+  --surface-2: #e8edf2;
+  --fg: #121e2a;
+  --muted: #56667a;
+  --line: #d5dde6;
+  --accent: #2253c4;
   --accent-fg: #ffffff;
-  --accent-soft: #dcebe4;
-  --high: #b3361f;
-  --high-soft: #f6dcd5;
-  --med: #8a5a00;
-  --med-soft: #f5e7c4;
-  --low: #3d6b52;
-  --low-soft: #dcebe2;
+  --accent-soft: #dde7fb;
+  --g-solid: #14774a; --g-on: #ffffff; --g-soft: #dcf2e5; --g-ink: #0d5232;
+  --y-solid: #f2b705; --y-on: #231a00; --y-soft: #fdf0c2; --y-ink: #6a4b00;
+  --r-solid: #c42d1b; --r-on: #ffffff; --r-soft: #fadbd5; --r-ink: #8a1d10;
+  --n-solid: #8593a5; --n-on: #ffffff; --n-soft: #e8edf2; --n-ink: #56667a;
   --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1512; --surface: #171f1b; --surface-2: #1f2924; --fg: #e6ece8; --muted: #94a39a; --line: #2b3830;
-    --accent: #6fcaa6; --accent-fg: #0b1a14; --accent-soft: #1d3329;
-    --high: #f08a72; --high-soft: #3a1f19; --med: #e3b552; --med-soft: #35290f; --low: #7fcf9f; --low-soft: #1b3426;
+    --bg: #0c141d; --surface: #131e2a; --surface-2: #1b2a39; --fg: #e8eef5; --muted: #98a8bb; --line: #26374a;
+    --accent: #7fa6ff; --accent-fg: #07142e; --accent-soft: #1a2c52;
+    --g-solid: #3fc27f; --g-on: #04210f; --g-soft: #12301f; --g-ink: #8fe3b6;
+    --y-solid: #f5c431; --y-on: #231a00; --y-soft: #352a07; --y-ink: #f5d675;
+    --r-solid: #ff6f5a; --r-on: #2a0701; --r-soft: #3b1710; --r-ink: #ffb0a3;
+    --n-solid: #6f8196; --n-on: #0c141d; --n-soft: #1b2a39; --n-ink: #98a8bb;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1512; --surface: #171f1b; --surface-2: #1f2924; --fg: #e6ece8; --muted: #94a39a; --line: #2b3830;
-  --accent: #6fcaa6; --accent-fg: #0b1a14; --accent-soft: #1d3329;
-  --high: #f08a72; --high-soft: #3a1f19; --med: #e3b552; --med-soft: #35290f; --low: #7fcf9f; --low-soft: #1b3426;
+  --bg: #0c141d; --surface: #131e2a; --surface-2: #1b2a39; --fg: #e8eef5; --muted: #98a8bb; --line: #26374a;
+  --accent: #7fa6ff; --accent-fg: #07142e; --accent-soft: #1a2c52;
+  --g-solid: #3fc27f; --g-on: #04210f; --g-soft: #12301f; --g-ink: #8fe3b6;
+  --y-solid: #f5c431; --y-on: #231a00; --y-soft: #352a07; --y-ink: #f5d675;
+  --r-solid: #ff6f5a; --r-on: #2a0701; --r-soft: #3b1710; --r-ink: #ffb0a3;
+  --n-solid: #6f8196; --n-on: #0c141d; --n-soft: #1b2a39; --n-ink: #98a8bb;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
-  padding-block: 20px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  padding-block: 18px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
 button { font: inherit; color: inherit; cursor: pointer; }
-input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; min-width: 0; }
+input, select, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; min-width: 0; max-width: 100%; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wrap { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
-header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
-header.top h1 { font-size: 26px; letter-spacing: -0.01em; }
-header.top p { margin: 2px 0 0; color: var(--muted); }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+header.top { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
+header.top h1 { font-size: 24px; letter-spacing: -0.01em; }
+header.top p { margin: 0; color: var(--muted); }
 .stamp { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
 .btn:disabled { opacity: .55; cursor: wait; }
 .btn.small { padding: 3px 9px; font-size: 12px; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-.col { display: grid; gap: 20px; min-width: 0; }
+
+/* status banner and tiles */
+.banner { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 16px; align-items: center; padding: 18px 20px; border-radius: 12px; background: var(--n-solid); color: var(--n-on); --on: var(--n-on); }
+.banner.red { background: var(--r-solid); color: var(--r-on); --on: var(--r-solid); }
+.banner.yellow { background: var(--y-solid); color: var(--y-on); --on: var(--y-solid); }
+.banner.green { background: var(--g-solid); color: var(--g-on); --on: var(--g-solid); }
+.banner .glyph { color: currentColor; display: flex; }
+.banner h2 { font-size: 30px; letter-spacing: -0.01em; line-height: 1.1; }
+.banner p { margin: 4px 0 0; font-size: 15px; overflow-wrap: anywhere; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); gap: 12px; }
+.tile { display: grid; gap: 4px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--n-soft); color: var(--n-ink); min-width: 0; --on: var(--n-soft); }
+.tile.red { background: var(--r-soft); color: var(--r-ink); border-color: var(--r-solid); --on: var(--r-soft); }
+.tile.yellow { background: var(--y-soft); color: var(--y-ink); border-color: var(--y-solid); --on: var(--y-soft); }
+.tile.green { background: var(--g-soft); color: var(--g-ink); border-color: var(--g-solid); --on: var(--g-soft); }
+.tile .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tile .name { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.tile .glyph { display: flex; }
+.tile .val { font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1.1; color: var(--fg); font-variant-numeric: tabular-nums; }
+.tile .state { font-size: 12px; font-weight: 700; }
+.tile .why { font-size: 12px; overflow-wrap: anywhere; }
+.glyph svg { display: block; }
+.glyph .c { fill: currentColor; }
+
+/* tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { border: 0; background: none; padding: 10px 14px; border-bottom: 3px solid transparent; font-family: var(--font-display); font-weight: 500; color: var(--muted); white-space: nowrap; }
+.tab:hover { color: var(--fg); }
+.tab.on { color: var(--fg); font-weight: 700; border-bottom-color: var(--accent); }
+.tab .n { font-family: var(--font-mono); font-size: 11px; background: var(--surface-2); border-radius: 99px; padding: 1px 7px; margin-left: 6px; }
+.pane { display: grid; gap: 16px; min-width: 0; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .cols { grid-template-columns: minmax(0,1fr); } }
+.col { display: grid; gap: 16px; min-width: 0; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 700px) { .two { grid-template-columns: minmax(0,1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
 .panel h2 { font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .panel h2 small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); }
-.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
+/* runway */
+.rw { position: relative; height: 62px; border-radius: 8px; border: 1px solid var(--line); overflow: hidden;
+  background: linear-gradient(90deg, var(--r-soft) 0 7.78%, var(--y-soft) 7.78% 23.33%, var(--g-soft) 23.33% 100%); }
+.rw .pin { position: absolute; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; border: 2px solid var(--surface); background: var(--n-solid); }
+.rw .pin.red { background: var(--r-solid); } .rw .pin.yellow { background: var(--y-solid); } .rw .pin.green { background: var(--g-solid); }
+.rw .now { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--fg); }
+.ticks { position: relative; height: 18px; margin-top: 4px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.ticks span:first-child { transform: none; }
+.ticks span:last-child { transform: translateX(-100%); }
+.up { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.up:first-child { border-top: 0; }
+.up .t { overflow-wrap: anywhere; }
+.up .sub { color: var(--muted); font-size: 12px; }
+
+/* shared pieces */
 .focus { display: grid; gap: 10px; }
-.item { display: grid; grid-template-columns: 6px minmax(0,1fr) auto; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-.item .bar { border-radius: 3px; background: var(--low); }
-.item.high .bar { background: var(--high); } .item.medium .bar { background: var(--med); }
+.item { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); align-items: start; }
 .item h3 { font-size: 14px; margin-bottom: 2px; overflow-wrap: anywhere; }
 .item p { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
-.chip.high { background: var(--high-soft); color: var(--high); } .chip.medium { background: var(--med-soft); color: var(--med); } .chip.low { background: var(--low-soft); color: var(--low); }
-.chip.agent { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.item.high { border-color: var(--r-solid); background: var(--r-soft); }
+.item.medium { border-color: var(--y-solid); background: var(--y-soft); }
+.item.low { border-color: var(--g-solid); background: var(--g-soft); }
+.item.high .glyph { color: var(--r-solid); --on: var(--r-soft); } .item.medium .glyph { color: var(--y-solid); --on: var(--y-soft); } .item.low .glyph { color: var(--g-solid); --on: var(--g-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.chip { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; font-weight: 600; }
+.chip.high { background: var(--r-solid); color: var(--r-on); } .chip.medium { background: var(--y-solid); color: var(--y-on); } .chip.low { background: var(--g-solid); color: var(--g-on); }
+.chip.agent { background: var(--accent-soft); color: var(--accent); }
 .empty { color: var(--muted); padding: 8px 0; margin: 0; }
-.err { color: var(--high); background: var(--high-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
-.ok { color: var(--low); background: var(--low-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
-
-.cmd { display: grid; gap: 10px; }
+.err { color: var(--r-ink); background: var(--r-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
+.ok { color: var(--g-ink); background: var(--g-soft); border-radius: 6px; padding: 8px 10px; margin-top: 6px; }
+.note { font-size: 12px; color: var(--muted); }
 textarea { width: 100%; min-height: 78px; resize: vertical; }
-.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cmd { display: grid; gap: 10px; }
 .suggest button { font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); }
 .suggest button:hover { border-color: var(--accent); }
 .route { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; }
@@ -86,17 +140,13 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
 .draft { display: grid; gap: 8px; border: 1px dashed var(--accent); border-radius: 8px; padding: 12px; }
 .draft .f { display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 8px; align-items: center; }
 .draft textarea { min-height: 140px; }
-
-.list { display: grid; gap: 0; }
+.list { display: grid; }
 .li { display: grid; grid-template-columns: 78px minmax(0,1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .li:first-child { border-top: 0; }
 .li .t { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
 .li a { color: var(--fg); text-decoration-color: var(--line); overflow-wrap: anywhere; }
 .li a:hover { color: var(--accent); }
 .li .sub { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-.two { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; }
-@media (max-width: 700px) { .two { grid-template-columns: minmax(0,1fr); } }
-
 .dl-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; align-items: end; }
 .dl-form label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .dl { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
@@ -109,7 +159,6 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
 .imp summary { cursor: pointer; margin: 6px 0; font-weight: 600; }
 .imp textarea { min-height: 90px; margin-bottom: 6px; }
 .cands { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; display: grid; gap: 8px; }
-
 .agents { display: grid; gap: 8px; }
 .agent { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface); text-align: left; width: 100%; }
 .agent:hover { border-color: var(--accent); }
@@ -117,9 +166,8 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
 .agent b { font-family: var(--font-display); display: block; }
 .agent span { color: var(--muted); font-size: 12px; }
 .src { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 12px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: inline-block; margin-right: 6px; }
-.dot.ok { background: var(--low); } .dot.bad { background: var(--high); }
-.note { font-size: 12px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--n-solid); display: inline-block; margin-right: 6px; }
+.dot.ok { background: var(--g-solid); } .dot.bad { background: var(--r-solid); }
 </style>
 
 <div class="wrap">
@@ -136,14 +184,69 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
     </div>
   </header>
 
-  <div class="grid">
-    <div class="col">
-      <section class="panel" aria-labelledby="focus-h">
-        <h2 id="focus-h"><span>What to concentrate on</span> <span class="row"><small id="focus-meta"></small><button class="btn small" id="save-notion" type="button" hidden>Save brief to Notion</button></span></h2>
-        <div class="focus" id="focus"><p class="empty">Run the brief and the Chief of Staff will rank today's work from Outlook, Gmail, calendars, Notion, Drive and your tracked grant deadlines, and name the agent best placed to handle each item.</p></div>
-        <div id="notion-status"></div>
-      </section>
+  <section class="banner" id="banner" aria-live="polite" aria-label="Overall status">
+    <div class="glyph" id="banner-glyph"></div>
+    <div><h2 id="banner-word">Loading</h2><p id="banner-text">Reading your calendar, mail and deadlines.</p></div>
+  </section>
 
+  <section class="tiles" aria-label="Status by area">
+    <article class="tile" id="t-deadlines"><div class="top"><span class="name">Grant deadlines</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+    <article class="tile" id="t-inbox"><div class="top"><span class="name">Inbox</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+    <article class="tile" id="t-cal"><div class="top"><span class="name">Next 48 hours</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+    <article class="tile" id="t-focus"><div class="top"><span class="name">Top priorities</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+    <article class="tile" id="t-src"><div class="top"><span class="name">Connections</span><span class="glyph"></span></div><div class="val">...</div><div class="state"></div><div class="why"></div></article>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab on" id="tb-overview" role="tab" type="button" aria-selected="true">Overview</button>
+    <button class="tab" id="tb-deadlines" role="tab" type="button" aria-selected="false">Grant deadlines<span class="n" id="tb-deadlines-n">0</span></button>
+    <button class="tab" id="tb-work" role="tab" type="button" aria-selected="false">Inbox and calendar</button>
+    <button class="tab" id="tb-agents" role="tab" type="button" aria-selected="false">Agents</button>
+  </nav>
+
+  <div class="pane" id="tab-overview" role="tabpanel">
+    <section class="panel" aria-labelledby="rw-h">
+      <h2 id="rw-h">Deadline runway, next 90 days <small id="rw-meta"></small></h2>
+      <div class="note" style="margin-bottom:4px">Today</div>
+      <div class="rw" id="runway" role="img" aria-label="Timeline of upcoming grant deadlines"></div>
+      <div class="ticks" aria-hidden="true"><span style="left:0">&nbsp;</span><span style="left:7.78%">7 days</span><span style="left:23.33%">21 days</span><span style="left:100%">90 days</span></div>
+      <div id="up"></div>
+    </section>
+    <section class="panel" aria-labelledby="focus-h">
+      <h2 id="focus-h"><span>Do these first</span> <span class="row"><small id="focus-meta"></small><button class="btn small" id="save-notion" type="button" hidden>Save brief to Notion</button></span></h2>
+      <div class="focus" id="focus"><p class="empty">Run the brief and the Chief of Staff will rank today's work from Outlook, Gmail, calendars, Notion, Drive and your tracked grant deadlines, and name the agent best placed to handle each item.</p></div>
+      <div id="notion-status"></div>
+    </section>
+  </div>
+
+  <div class="pane" id="tab-deadlines" role="tabpanel" hidden>
+    <section class="panel" aria-labelledby="dl-h">
+      <h2 id="dl-h"><span>Grant deadlines and funder portals</span> <small id="dl-meta"></small></h2>
+      <div class="dl-form" id="dl-form">
+        <label for="dl-title">Opportunity<input id="dl-title" type="text" placeholder="Program or grant name"></label>
+        <label for="dl-funder">Funder<input id="dl-funder" type="text" placeholder="Funder name"></label>
+        <label for="dl-due">Due date<input id="dl-due" type="date"></label>
+        <label for="dl-url">Portal link<input id="dl-url" type="url" placeholder="https://"></label>
+        <button class="btn primary" id="dl-add" type="button">Add deadline</button>
+      </div>
+      <div class="row" style="margin-bottom:8px"><button class="btn" id="dl-scan" type="button">Scan my tools for deadlines</button><span class="note" id="dl-scan-status">Searches Outlook, Gmail, both calendars and Notion for grant and funding dates. You approve every date before it is tracked.</span></div>
+      <details class="imp"><summary>Import dates from Sintra AI</summary><p class="note">Sintra has no connector here. Paste its deadline list or upload an export (.csv, .txt, .md, .json, up to 150 KB). The Chief of Staff reads it and proposes entries. You approve each one before it is tracked.</p><textarea id="imp-text" aria-label="Pasted Sintra deadline list" placeholder="Paste text here"></textarea><div class="row"><input id="imp-file" type="file" accept=".csv,.txt,.md,.json,text/*" aria-label="Upload a Sintra export"><button class="btn" id="imp-go" type="button">Read it</button><span class="note" id="imp-status"></span></div></details>
+      <div id="dl-list"></div>
+      <div class="cands" id="dl-cands" hidden></div>
+    </section>
+  </div>
+
+  <div class="pane" id="tab-work" role="tabpanel" hidden>
+    <div class="two">
+      <section class="panel" aria-labelledby="cal-h"><h2 id="cal-h">Next 7 days <small id="cal-meta"></small></h2><div class="list" id="cal"></div></section>
+      <section class="panel" aria-labelledby="mail-h"><h2 id="mail-h">Unread mail <small id="mail-meta"></small></h2><div class="list" id="mail"></div></section>
+      <section class="panel" aria-labelledby="notion-h"><h2 id="notion-h">Recently edited in Notion <small id="notion-meta"></small></h2><div class="list" id="notion"></div></section>
+      <section class="panel" aria-labelledby="drive-h"><h2 id="drive-h">Recent in Drive <small id="drive-meta"></small></h2><div class="list" id="drive"></div></section>
+    </div>
+  </div>
+
+  <div class="pane" id="tab-agents" role="tabpanel" hidden>
+    <div class="cols">
       <section class="panel cmd" aria-labelledby="cmd-h">
         <h2 id="cmd-h">Give the Chief of Staff a task</h2>
         <textarea id="task" placeholder="Describe the work in plain words. Example: Draft the logic model for the youth employment grant, with low, medium and high funding options."></textarea>
@@ -165,46 +268,23 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
           <div id="d-status"></div>
         </div>
       </section>
-
-      <section class="panel" aria-labelledby="dl-h">
-        <h2 id="dl-h"><span>Grant deadlines and funder portals</span> <small id="dl-meta"></small></h2>
-        <div class="dl-form" id="dl-form">
-          <label for="dl-title">Opportunity<input id="dl-title" type="text" placeholder="Program or grant name"></label>
-          <label for="dl-funder">Funder<input id="dl-funder" type="text" placeholder="Funder name"></label>
-          <label for="dl-due">Due date<input id="dl-due" type="date"></label>
-          <label for="dl-url">Portal link<input id="dl-url" type="url" placeholder="https://"></label>
-          <button class="btn primary" id="dl-add" type="button">Add deadline</button>
-        </div>
-        <div class="row" style="margin-bottom:8px"><button class="btn" id="dl-scan" type="button">Scan my tools for deadlines</button><span class="note" id="dl-scan-status">Searches Outlook, Gmail, both calendars and Notion for grant and funding dates. You approve every date before it is tracked.</span></div>
-        <details class="imp"><summary>Import dates from Sintra AI</summary><p class="note">Sintra has no connector here. Paste its deadline list or upload an export (.csv, .txt, .md, .json, up to 150 KB). The Chief of Staff reads it and proposes entries. You approve each one before it is tracked.</p><textarea id="imp-text" aria-label="Pasted Sintra deadline list" placeholder="Paste text here"></textarea><div class="row"><input id="imp-file" type="file" accept=".csv,.txt,.md,.json,text/*" aria-label="Upload a Sintra export"><button class="btn" id="imp-go" type="button">Read it</button><span class="note" id="imp-status"></span></div></details>
-        <div id="dl-list"></div>
-        <div class="cands" id="dl-cands" hidden></div>
-      </section>
-
-      <div class="two">
-        <section class="panel" aria-labelledby="cal-h"><h2 id="cal-h">Next 7 days <small id="cal-meta"></small></h2><div class="list" id="cal"></div></section>
-        <section class="panel" aria-labelledby="mail-h"><h2 id="mail-h">Unread mail <small id="mail-meta"></small></h2><div class="list" id="mail"></div></section>
-        <section class="panel" aria-labelledby="notion-h"><h2 id="notion-h">Recently edited in Notion <small id="notion-meta"></small></h2><div class="list" id="notion"></div></section>
-        <section class="panel" aria-labelledby="drive-h"><h2 id="drive-h">Recent in Drive <small id="drive-meta"></small></h2><div class="list" id="drive"></div></section>
-      </div>
+      <aside class="col">
+        <section class="panel" aria-labelledby="roster-h">
+          <h2 id="roster-h">Agent roster</h2>
+          <p class="note" style="margin:0 0 10px">The Chief of Staff picks from these. Select one to send your task straight to it.</p>
+          <div class="agents" id="agents"></div>
+        </section>
+        <section class="panel" aria-labelledby="src-h">
+          <h2 id="src-h">Connected sources</h2>
+          <div id="sources"></div>
+          <p class="note" style="margin:10px 0 0">Reads are automatic. The console writes in only two places, and only when you press the button: a Gmail draft (never sent) and a page in your Notion Morning briefs hub.</p>
+        </section>
+        <section class="panel" aria-labelledby="gov-h">
+          <h2 id="gov-h">Handling rules</h2>
+          <p class="note" style="margin:0">Email subjects, senders, snippets and event titles are sent to Claude to rank and draft. Agents do not invent figures, dates or funder rules. Anything unverified is marked to verify.</p>
+        </section>
+      </aside>
     </div>
-
-    <aside class="col">
-      <section class="panel" aria-labelledby="roster-h">
-        <h2 id="roster-h">Agent roster</h2>
-        <p class="note" style="margin:0 0 10px">The Chief of Staff picks from these. Select one to send your task straight to it.</p>
-        <div class="agents" id="agents"></div>
-      </section>
-      <section class="panel" aria-labelledby="src-h">
-        <h2 id="src-h">Connected sources</h2>
-        <div id="sources"></div>
-        <p class="note" style="margin:10px 0 0">Reads are automatic. The console writes in only two places, and only when you press the button: a Gmail draft (never sent) and a page in your Notion Morning briefs hub.</p>
-      </section>
-      <section class="panel" aria-labelledby="gov-h">
-        <h2 id="gov-h">Handling rules</h2>
-        <p class="note" style="margin:0">Email subjects, senders, snippets and event titles are sent to Claude to rank and draft. Agents do not invent figures, dates or funder rules. Anything unverified is marked to verify.</p>
-      </section>
-    </aside>
   </div>
 </div>
 
@@ -296,8 +376,9 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
       r.appendChild(l); r.appendChild(el("span", { class: "note" }, srcStatus[k] === "ok" ? "live" : srcStatus[k] || "waiting"));
       box.appendChild(r);
     });
+    computeRag();
   }
-  renderSources();
+renderSources();
 
   function errText(e) {
     var c = errCode(e);
@@ -391,6 +472,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
     return [n + (n === 1 ? " day left" : " days left"), n <= 7 ? "high" : n <= 21 ? "medium" : "low"];
   }
   function renderDeadlines() {
+    computeRag();
     var box = $("dl-list"); clear(box);
     if (!db) { box.appendChild(el("p", { class: "empty" }, "Saving deadlines is not available in this view. Open the page inside Claude to track them.")); $("dl-form").hidden = true; $("dl-meta").textContent = ""; return; }
     if (!dlLoaded) { box.appendChild(el("p", { class: "empty" }, "Loading tracked deadlines...")); return; }
@@ -572,18 +654,7 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
       var res = await sample.json("You are the Chief of Staff for a busy leader who runs Ontario nonprofit grant work and government consulting. Today is " + today() + ". From the items below, pick the 3 to 6 things that most deserve attention today. Ignore promotions, shipping notices and newsletters unless they carry a deadline. Any tracked grant deadline due within 14 days or overdue must appear and rank high. Rank by deadline, consequence of delay, and public or funder impact.\n\nItems:\n" + ctx +
         "\n\nAgents you can assign:\n" + catalog() +
         "\n\nReturn JSON only: {\"summary\": \"<two plain sentences on the shape of the day>\", \"focus\": [{\"title\": \"...\", \"why\": \"<one sentence>\", \"priority\": \"high|medium|low\", \"agent\": \"<agent id>\", \"suggested_task\": \"<a ready to run task for that agent>\"}]}. Only use items present above, never invent meetings, emails or dates. " + NO_DASH, { modelTier: "default", cache: false });
-      var box = $("focus"); clear(box);
-      if (res.summary) box.appendChild(el("p", { class: "note", style: "margin:0 0 4px" }, res.summary));
-      (res.focus || []).forEach(function (f) {
-        var pr = ["high", "medium", "low"].indexOf(f.priority) >= 0 ? f.priority : "medium", ag = byId[f.agent] || byId.gov;
-        var it = el("div", { class: "item " + pr }); it.appendChild(el("div", { class: "bar" }));
-        var mid = el("div"); mid.appendChild(el("h3", null, f.title || "")); mid.appendChild(el("p", null, f.why || ""));
-        var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, pr + " priority")); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch); it.appendChild(mid);
-        var go = el("button", { class: "btn", type: "button" }, "Hand off");
-        go.addEventListener("click", function () { state.selectedAgent = ag.id; renderAgents(); $("task").value = f.suggested_task || f.title || ""; $("cmd-status").textContent = "Loaded for " + ag.name + ". Press Route and run."; $("task").scrollIntoView({ behavior: "smooth", block: "center" }); });
-        it.appendChild(go); box.appendChild(it);
-      });
-      state.lastBrief = res; $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+      renderFocus(res); state.lastBrief = res; saveBrief(res); computeRag(); $("focus-meta").textContent = "ranked " + new Date().toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
       $("save-notion").hidden = !mcp || !(res.focus && res.focus.length);
     } catch (e) {
       $("focus").replaceChildren(el("div", { class: "err" }, errCode(e) === "not_granted" ? "Claude access was not allowed for this page, so the brief cannot run." : "The brief could not finish. Try again.")); $("focus-meta").textContent = "";
@@ -610,6 +681,156 @@ textarea { width: 100%; min-height: 78px; resize: vertical; }
     try { navigator.clipboard.writeText(t).then(function () { done(true); }, function () { done(false); }); } catch (e) { done(false); }
   });
   $("refresh").addEventListener("click", function () { if (!mcp) return; $("refresh").disabled = true; mcp.invalidate().catch(function () {}).then(function () { $("refresh").disabled = false; }); });
+
+
+  /* ---- status board, runway, tabs, remembered brief ---- */
+  var ragReady = false;
+  var RAGWORD = { red: "Act now", yellow: "Watch", green: "On track", grey: "Loading" };
+  function glyph(st, size) {
+    var s = size || 24, body;
+    if (st === "green") body = '<circle class="c" cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="var(--on)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+    else if (st === "yellow") body = '<path class="c" d="M12 2L23 21H1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5.5M12 17.2v.6" stroke="var(--on)" stroke-width="2.4" stroke-linecap="round"/>';
+    else if (st === "red") body = '<path class="c" d="M8 1.5h8L22.5 8v8L16 22.5H8L1.5 16V8z"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--on)" stroke-width="2.4" stroke-linecap="round"/>';
+    else body = '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="3 3"/>';
+    return '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" aria-hidden="true">' + body + '</svg>';
+  }
+  function setTile(id, st, val, why) {
+    var t = $(id); t.className = "tile " + st;
+    t.querySelector(".glyph").innerHTML = glyph(st, 24);
+    t.querySelector(".val").textContent = val;
+    t.querySelector(".state").textContent = RAGWORD[st];
+    t.querySelector(".why").textContent = why;
+  }
+  var worst = function (list) { return list.indexOf("red") >= 0 ? "red" : list.indexOf("yellow") >= 0 ? "yellow" : list.indexOf("green") >= 0 ? "green" : "grey"; };
+
+  function openDated() {
+    return deadlines.filter(function (d) { return d.status !== "submitted" && d.due; })
+      .map(function (d) { return { d: d, n: daysLeft(d.due) }; }).sort(function (a, b) { return a.n - b.n; });
+  }
+  function dayWord(n) { return n < 0 ? Math.abs(n) + (Math.abs(n) === 1 ? " day overdue" : " days overdue") : n === 0 ? "due today" : n === 1 ? "1 day left" : n + " days left"; }
+  function ragOfDays(n) { return n <= 7 ? "red" : n <= 21 ? "yellow" : "green"; }
+
+  function computeRag() {
+    if (!ragReady) return;
+    var out = [], why = [];
+    /* grant deadlines */
+    var sDl, vDl, wDl;
+    if (!db) { sDl = "grey"; vDl = "n/a"; wDl = "Saving is not available in this view"; }
+    else if (!dlLoaded) { sDl = "grey"; vDl = "..."; wDl = "Loading tracked deadlines"; }
+    else {
+      var dated = openDated(), open = deadlines.filter(function (d) { return d.status !== "submitted"; }), undated = open.length - dated.length;
+      var over = dated.filter(function (x) { return x.n < 0; }).length;
+      if (dated.length && dated[0].n <= 7) { sDl = "red"; vDl = over ? over + " overdue" : dated[0].n === 0 ? "Today" : dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
+      else if (dated.length && dated[0].n <= 21) { sDl = "yellow"; vDl = dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
+      else if (undated) { sDl = "yellow"; vDl = undated + " undated"; wDl = "Add a due date to each open item" + (dated.length ? ". Next dated: " + dated[0].d.title + ", " + dayWord(dated[0].n) : ""); }
+      else if (dated.length) { sDl = "green"; vDl = dated[0].n + " days"; wDl = "Next: " + dated[0].d.title; }
+      else { sDl = "green"; vDl = "None open"; wDl = "No open grant deadlines tracked"; }
+    }
+    setTile("t-deadlines", sDl, vDl, wDl); out.push(sDl); if (sDl === "red" || sDl === "yellow") why.push("Grant deadlines: " + vDl + ". " + wDl + ".");
+
+    /* inbox */
+    var mailRows = (state.rows.omail || []).length + (state.rows.gmail || []).length;
+    var mailKnown = state.rows.omail || state.rows.gmail;
+    var sIn = !mailKnown ? "grey" : mailRows <= 5 ? "green" : mailRows <= 15 ? "yellow" : "red";
+    setTile("t-inbox", sIn, mailKnown ? String(mailRows) : "...", mailKnown ? "Unread in Outlook and Gmail, latest messages" : "Waiting for mail");
+    out.push(sIn); if (sIn === "red" || sIn === "yellow") why.push("Inbox: " + mailRows + " unread.");
+
+    /* next 48 hours */
+    var calKnown = state.rows.ocal || state.rows.gcal, sCal = "grey", vCal = "...", wCal = "Waiting for calendars";
+    if (calKnown) {
+      var now = Date.now(), lim = now + 48 * 3600000;
+      var ev = (state.rows.ocal || []).concat(state.rows.gcal || []).filter(function (r) { return r.ts && r.ts >= now - 3600000 && r.ts <= lim; }).sort(function (a, b) { return a.ts - b.ts; });
+      sCal = ev.length <= 3 ? "green" : ev.length <= 6 ? "yellow" : "red"; vCal = String(ev.length);
+      wCal = ev.length ? "Next: " + ev[0].title + ", " + fmtDay(ev[0].ts) + " " + fmtTime(ev[0].ts) : "Nothing booked in the next 48 hours";
+    }
+    setTile("t-cal", sCal, vCal, wCal); out.push(sCal); if (sCal === "red" || sCal === "yellow") why.push("Calendar: " + vCal + " events in 48 hours.");
+
+    /* top priorities from the last brief */
+    var sF = "grey", vF = "No brief", wF = "Run the Chief of Staff brief";
+    if (state.lastBrief && state.lastBrief.focus) {
+      var hi = state.lastBrief.focus.filter(function (f) { return f.priority === "high"; }).length;
+      sF = hi === 0 ? "green" : hi <= 2 ? "yellow" : "red"; vF = hi + " high"; wF = state.lastBrief.focus.length + " items ranked" + (state.lastBriefAt ? ", " + fmtDay(state.lastBriefAt) + " " + fmtTime(state.lastBriefAt) : "");
+    }
+    setTile("t-focus", sF, vF, wF); out.push(sF); if (sF === "red" || sF === "yellow") why.push("Priorities: " + vF + " in the latest brief.");
+
+    /* connections */
+    var ok = 0, bad = 0, stale = 0;
+    KEYS.forEach(function (k) { var s = srcStatus[k]; if (s === "ok") ok++; else if (s === "stale") stale++; else if (s) bad++; });
+    var sS = ok === KEYS.length ? "green" : bad >= 3 ? "red" : (bad >= 1 || stale >= 1) ? "yellow" : "grey";
+    setTile("t-src", sS, ok + " of " + KEYS.length, bad ? bad + " not connected or blocked. See the Agents tab" : stale ? "Showing older data for " + stale : ok === KEYS.length ? "All sources live" : "Connecting");
+    out.push(sS); if (sS === "red" || sS === "yellow") why.push("Connections: " + ok + " of " + KEYS.length + " live.");
+
+    /* overall banner */
+    var all = worst(out), b = $("banner");
+    b.className = "banner " + all; $("banner-glyph").innerHTML = glyph(all, 56); $("banner-word").textContent = RAGWORD[all];
+    $("banner-text").textContent = all === "grey" ? "Reading your calendar, mail and deadlines." : why.length ? why.slice(0, 2).join(" ") : "Nothing needs urgent action. Every area is within its limits.";
+    document.title = (all === "red" ? "Act now" : all === "yellow" ? "Watch" : all === "green" ? "On track" : "Loading") + " | Chief of Staff Console";
+    renderRunway();
+    if (db && dlLoaded) $("tb-deadlines-n").textContent = String(deadlines.filter(function (d) { return d.status !== "submitted"; }).length);
+  }
+
+  function renderRunway() {
+    var box = $("runway"); clear(box); box.appendChild(el("div", { class: "now" }));
+    var up = $("up"); clear(up);
+    if (!db || !dlLoaded) { $("rw-meta").textContent = ""; return; }
+    var dated = openDated(), inWin = dated.filter(function (x) { return x.n >= 0 && x.n <= 90; });
+    var over = dated.filter(function (x) { return x.n < 0; }), later = dated.filter(function (x) { return x.n > 90; }).length;
+    var undated = deadlines.filter(function (d) { return d.status !== "submitted" && !d.due; }).length;
+    var rows = [], lastPct = -10, rowIdx = 0;
+    inWin.forEach(function (x) {
+      var pct = x.n / 90 * 100; rowIdx = (pct - lastPct < 3.5) ? (rowIdx + 1) % 3 : 0; lastPct = pct;
+      var p = el("div", { class: "pin " + ragOfDays(x.n), title: x.d.title + ", " + dayWord(x.n) });
+      p.style.left = Math.max(1, pct) + "%"; p.style.top = (10 + rowIdx * 16) + "px"; box.appendChild(p);
+    });
+    $("rw-meta").textContent = inWin.length + " in window" + (over.length ? ", " + over.length + " overdue" : "") + (later ? ", " + later + " later" : "") + (undated ? ", " + undated + " undated" : "");
+    box.setAttribute("aria-label", "Timeline of " + inWin.length + " grant deadlines in the next 90 days");
+    var list = over.concat(inWin).slice(0, 6);
+    if (!list.length) up.appendChild(el("p", { class: "empty" }, undated ? undated + " open items have no due date yet. Add dates in the Grant deadlines tab so they appear here." : "No dated deadlines in the next 90 days."));
+    list.forEach(function (x) {
+      var r = el("div", { class: "up" }), st = x.n < 0 ? "red" : ragOfDays(x.n);
+      r.appendChild(el("span", { class: "chip " + (st === "red" ? "high" : st === "yellow" ? "medium" : "low") }, dayWord(x.n)));
+      var m = el("div"); m.appendChild(el("div", { class: "t" }, x.d.title || "(untitled)")); m.appendChild(el("div", { class: "sub" }, [x.d.funder, "Due " + x.d.due].filter(Boolean).join(" | "))); r.appendChild(m);
+      var u = safeUrl(x.d.url); if (u) r.appendChild(el("a", { href: u, target: "_blank", rel: "noopener" }, "Portal")); else r.appendChild(el("span"));
+      up.appendChild(r);
+    });
+  }
+
+  /* focus list with red, yellow, green items; remembered between visits */
+  var PRI = { high: "red", medium: "yellow", low: "green" };
+  function renderFocus(res) {
+    var box = $("focus"); clear(box);
+    if (res.summary) box.appendChild(el("p", { class: "note", style: "margin:0 0 4px" }, res.summary));
+    (res.focus || []).forEach(function (f) {
+      var pr = PRI[f.priority] ? f.priority : "medium", ag = byId[f.agent] || byId.gov;
+      var it = el("div", { class: "item " + pr });
+      var g = el("span", { class: "glyph" }); g.innerHTML = glyph(PRI[pr], 26); it.appendChild(g);
+      var mid = el("div"); mid.appendChild(el("h3", null, f.title || "")); mid.appendChild(el("p", null, f.why || ""));
+      var ch = el("div", { class: "chips" }); ch.appendChild(el("span", { class: "chip " + pr }, RAGWORD[PRI[pr]])); ch.appendChild(el("span", { class: "chip agent" }, ag.name)); mid.appendChild(ch); it.appendChild(mid);
+      var go = el("button", { class: "btn", type: "button" }, "Hand off");
+      go.addEventListener("click", function () { state.selectedAgent = ag.id; renderAgents(); $("task").value = f.suggested_task || f.title || ""; $("cmd-status").textContent = "Loaded for " + ag.name + ". Press Route and run."; location.hash = "agents"; });
+      it.appendChild(go); box.appendChild(it);
+    });
+  }
+  function saveBrief(res) { state.lastBriefAt = Date.now(); try { localStorage.setItem("cos-brief", JSON.stringify({ res: res, at: state.lastBriefAt })); } catch (e) {} }
+  function loadBrief() {
+    try {
+      var s = JSON.parse(localStorage.getItem("cos-brief") || "null");
+      if (s && s.res && s.res.focus) { state.lastBrief = s.res; state.lastBriefAt = s.at; renderFocus(s.res); $("focus-meta").textContent = "from " + fmtDay(s.at) + " " + fmtTime(s.at) + (localISO(new Date(s.at)) !== today() ? ", run again for today" : ""); }
+    } catch (e) {}
+  }
+
+  /* tabs */
+  var TABS = ["overview", "deadlines", "work", "agents"];
+  function showTab(name) {
+    if (TABS.indexOf(name) < 0) name = "overview";
+    TABS.forEach(function (t) { $("tab-" + t).hidden = t !== name; var b = $("tb-" + t); b.setAttribute("aria-selected", t === name ? "true" : "false"); b.classList.toggle("on", t === name); });
+  }
+  TABS.forEach(function (t) { $("tb-" + t).addEventListener("click", function () { location.hash = t; showTab(t); }); });
+  window.addEventListener("hashchange", function () { showTab(location.hash.replace("#", "")); });
+  showTab(location.hash.replace("#", ""));
+
+  ragReady = true; loadBrief(); computeRag();
+  setInterval(computeRag, 60000);
 
   /* boot */
   var C = window.claude;
